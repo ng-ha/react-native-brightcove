@@ -67,6 +67,9 @@ android {
 repositories {
   mavenCentral()
   google()
+  maven {
+    url 'https://repo.brightcove.com/releases'
+  }
 }
 
 def kotlin_version = getExtOrDefault("kotlinVersion")
@@ -74,6 +77,7 @@ def kotlin_version = getExtOrDefault("kotlinVersion")
 dependencies {
   implementation "com.facebook.react:react-android"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+  implementation "com.brightcove.player:exoplayer2:10.2.0"
 }
 
 react {

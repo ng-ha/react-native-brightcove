@@ -1,41 +1,130 @@
 package com.brightcove
 
-import android.graphics.Color
+import com.brightcove.util.BrightcoveEvent
 import com.facebook.react.module.annotations.ReactModule
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.ViewManagerDelegate
 import com.facebook.react.uimanager.annotations.ReactProp
-import com.facebook.react.viewmanagers.BrightcoveViewManagerInterface
 import com.facebook.react.viewmanagers.BrightcoveViewManagerDelegate
+import com.facebook.react.viewmanagers.BrightcoveViewManagerInterface
 
 @ReactModule(name = BrightcoveViewManager.NAME)
 class BrightcoveViewManager : SimpleViewManager<BrightcoveView>(),
   BrightcoveViewManagerInterface<BrightcoveView> {
-  private val mDelegate: ViewManagerDelegate<BrightcoveView>
+  private val delegate: ViewManagerDelegate<BrightcoveView> = BrightcoveViewManagerDelegate(this)
 
-  init {
-    mDelegate = BrightcoveViewManagerDelegate(this)
+  override fun getDelegate(): ViewManagerDelegate<BrightcoveView> = delegate
+
+  override fun getName(): String = NAME
+
+  override fun createViewInstance(context: ThemedReactContext): BrightcoveView =
+    BrightcoveView(context)
+
+  @ReactProp(name = "uri")
+  override fun setUri(view: BrightcoveView?, value: String?) {
+    view?.setUri(value)
   }
 
-  override fun getDelegate(): ViewManagerDelegate<BrightcoveView>? {
-    return mDelegate
+  @ReactProp(name = "accountId")
+  override fun setAccountId(view: BrightcoveView?, value: String?) {
+    view?.setAccountId(value)
   }
 
-  override fun getName(): String {
-    return NAME
+  @ReactProp(name = "policyKey")
+  override fun setPolicyKey(view: BrightcoveView?, value: String?) {
+    view?.setPolicyKey(value)
   }
 
-  public override fun createViewInstance(context: ThemedReactContext): BrightcoveView {
-    return BrightcoveView(context)
+  @ReactProp(name = "playerName")
+  override fun setPlayerName(view: BrightcoveView?, value: String?) {
+    view?.setPlayerName(value)
   }
 
-  @ReactProp(name = "color")
-  override fun setColor(view: BrightcoveView?, color: String?) {
-    view?.setBackgroundColor(Color.parseColor(color))
+  @ReactProp(name = "videoId")
+  override fun setVideoId(view: BrightcoveView?, value: String?) {
+    view?.setVideoId(value)
+  }
+
+  @ReactProp(name = "autoPlay")
+  override fun setAutoPlay(view: BrightcoveView?, value: Boolean) {
+    view?.setAutoPlay(value)
+  }
+
+  @ReactProp(name = "play")
+  override fun setPlay(view: BrightcoveView?, value: Boolean) {
+    view?.setPlay(value)
+  }
+
+  @ReactProp(name = "fullscreen")
+  override fun setFullscreen(view: BrightcoveView?, value: Boolean) {
+    view?.setFullscreen(value)
+  }
+
+  @ReactProp(name = "disableDefaultControl")
+  override fun setDisableDefaultControl(view: BrightcoveView?, value: Boolean) {
+    view?.setDisableDefaultControl(value)
+  }
+
+  @ReactProp(name = "volume")
+  override fun setVolume(view: BrightcoveView?, value: Float) {
+    view?.setVolume(value)
+  }
+
+  @ReactProp(name = "bitRate")
+  override fun setBitRate(view: BrightcoveView?, value: Float) {
+    view?.setBitRate(value)
+  }
+
+  @ReactProp(name = "adVideoLoadTimeout")
+  override fun setAdVideoLoadTimeout(view: BrightcoveView?, value: Int) {
+    view?.setAdVideoLoadTimeout(value)
+  }
+
+  @ReactProp(name = "playbackRate")
+  override fun setPlaybackRate(view: BrightcoveView?, value: Float) {
+    view?.setPlaybackRate(value)
+  }
+
+  override fun play(view: BrightcoveView?) {
+    view?.play()
+  }
+
+  override fun pause(view: BrightcoveView?) {
+    view?.pause()
+  }
+
+  override fun seekTo(view: BrightcoveView?, seconds: Int) {
+    view?.seekTo(seconds * 1000L)
+  }
+
+  override fun stopPlayback(view: BrightcoveView?) {
+    view?.stopPlayback()
+  }
+
+  override fun toggleFullscreen(view: BrightcoveView?, isFullscreen: Boolean) {
+    view?.toggleFullscreen(isFullscreen)
+  }
+
+  override fun toggleInViewPort(view: BrightcoveView?, inViewPort: Boolean) {
+    view?.toggleInViewPort(inViewPort)
   }
 
   companion object {
     const val NAME = "BrightcoveView"
+  }
+
+  override fun getExportedCustomBubblingEventTypeConstants(): Map<String, Any> {
+    val result = mutableMapOf<String, Any>()
+    val events = BrightcoveEvent.entries.map { it.eventName }
+    for (event in events) {
+      result[event] = mapOf(
+        "phasedRegistrationNames" to mapOf(
+          "bubbled" to event,
+          "captured" to "${event}Capture"
+        )
+      )
+    }
+    return result
   }
 }

@@ -1,19 +1,33 @@
 package com.brightcove
 
-import com.facebook.react.ReactPackage
+import com.facebook.react.BaseReactPackage
 import com.facebook.react.bridge.NativeModule
 import com.facebook.react.bridge.ReactApplicationContext
+import com.facebook.react.module.model.ReactModuleInfo
+import com.facebook.react.module.model.ReactModuleInfoProvider
 import com.facebook.react.uimanager.ViewManager
-import java.util.ArrayList
 
-class BrightcoveViewPackage : ReactPackage {
+class BrightcoveViewPackage : BaseReactPackage() {
   override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> {
-    val viewManagers: MutableList<ViewManager<*, *>> = ArrayList()
-    viewManagers.add(BrightcoveViewManager())
-    return viewManagers
+    return listOf(BrightcoveViewManager())
   }
 
-  override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> {
-    return emptyList()
+  override fun getModule(name: String, reactContext: ReactApplicationContext): NativeModule? =
+    when (name) {
+      BrightcoveViewManager.NAME -> BrightcoveViewManager()
+      else -> null
+    }
+
+  override fun getReactModuleInfoProvider(): ReactModuleInfoProvider = ReactModuleInfoProvider {
+    mapOf(
+      BrightcoveViewManager.NAME to ReactModuleInfo(
+        name = BrightcoveViewManager.NAME,
+        className = BrightcoveViewManager.NAME,
+        canOverrideExistingModule = false,
+        needsEagerInit = false,
+        isCxxModule = false,
+        isTurboModule = true,
+      )
+    )
   }
 }

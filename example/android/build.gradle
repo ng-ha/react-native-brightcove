@@ -18,4 +18,12 @@ buildscript {
     }
 }
 
+allprojects {
+    repositories {
+        maven {
+            url 'https://repo.brightcove.com/releases'
+        }
+    }
+}
+
 apply plugin: "com.facebook.react.rootproject"
