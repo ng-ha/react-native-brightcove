@@ -78,6 +78,7 @@ dependencies {
   implementation "com.facebook.react:react-android"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
   implementation "com.brightcove.player:exoplayer2:10.2.0"
+  implementation "com.brightcove.player:offline-playback:10.2.0"
 }
 
 react {

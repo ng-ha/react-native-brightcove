@@ -15,6 +15,7 @@ import com.brightcove.player.display.ExoPlayerVideoDisplayComponent
 import com.brightcove.player.edge.Catalog
 import com.brightcove.player.edge.CatalogError
 import com.brightcove.player.edge.VideoListener
+import com.brightcove.player.edge.OfflineStoreManager
 import com.brightcove.player.event.Event
 import com.brightcove.player.event.EventType
 import com.brightcove.player.model.DeliveryType
@@ -65,6 +66,10 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
     setupLayout()
     requestLayout()
     ViewCompat.setTranslationZ(this, 9999f)
+
+    val videoDisplayComponent =
+      brightcoveVideoView.videoDisplay as ExoPlayerVideoDisplayComponent
+    videoDisplayComponent.setMediaStore(OfflineStoreManager.getInstance(context))
 
     val eventEmitter = brightcoveVideoView.getEventEmitter()
     eventEmitter.on(EventType.VIDEO_SIZE_KNOWN) {
