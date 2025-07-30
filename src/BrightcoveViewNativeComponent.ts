@@ -22,11 +22,10 @@ type TBrightcovePlayerEventBuffer = {
 };
 
 interface NativeProps extends ViewProps {
-  uri?: string | null;
   accountId?: string | null;
-  policyKey?: string | null;
-  videoId?: string | null;
   playerName?: string | null;
+  videoId?: string | null;
+  policyKey?: string | null;
   autoPlay?: boolean | null;
   play?: boolean | null;
   fullscreen?: boolean | null;
@@ -37,11 +36,6 @@ interface NativeProps extends ViewProps {
    * If you set the volume before the player is initialized, it will not work.
    */
   volume?: Float | null;
-  bitRate?: Float | null;
-  /**
-   * Ad Video Load Timeout in **milliseconds**, default is 3000.
-   */
-  adVideoLoadTimeout?: Int32 | null;
   playbackRate?: Float | null;
   onReady?: CodegenTypes.BubblingEventHandler<TBrightcovePlayerEventBase> | null;
   onPlay?: CodegenTypes.BubblingEventHandler<TBrightcovePlayerEventBase> | null;
@@ -50,8 +44,6 @@ interface NativeProps extends ViewProps {
   onProgress?: CodegenTypes.BubblingEventHandler<TBrightcovePlayerEventProgress> | null;
   onUpdateBufferProgress?: CodegenTypes.BubblingEventHandler<TBrightcovePlayerEventBuffer> | null;
   onChangeDuration?: CodegenTypes.BubblingEventHandler<TBrightcovePlayerEventDuration> | null;
-  onAdsLoaded?: CodegenTypes.BubblingEventHandler<TBrightcovePlayerEventBase> | null;
-  onAdsPlaying?: CodegenTypes.BubblingEventHandler<TBrightcovePlayerEventBase> | null;
   onEnterFullscreen?: CodegenTypes.BubblingEventHandler<TBrightcovePlayerEventBase> | null;
   onExitFullscreen?: CodegenTypes.BubblingEventHandler<TBrightcovePlayerEventBase> | null;
 }

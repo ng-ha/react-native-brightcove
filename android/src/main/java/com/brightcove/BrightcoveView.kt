@@ -14,11 +14,10 @@ import androidx.media3.common.PlaybackParameters
 import com.brightcove.player.display.ExoPlayerVideoDisplayComponent
 import com.brightcove.player.edge.Catalog
 import com.brightcove.player.edge.CatalogError
-import com.brightcove.player.edge.VideoListener
 import com.brightcove.player.edge.OfflineStoreManager
+import com.brightcove.player.edge.VideoListener
 import com.brightcove.player.event.Event
 import com.brightcove.player.event.EventType
-import com.brightcove.player.model.DeliveryType
 import com.brightcove.player.model.Video
 import com.brightcove.player.view.BrightcoveExoPlayerVideoView
 import com.brightcove.util.BrightcoveEvent
@@ -29,13 +28,10 @@ import com.facebook.react.bridge.LifecycleEventListener
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.UIManagerHelper
-import java.net.URI
-import java.net.URISyntaxException
 
 class BrightcoveView : RelativeLayout, LifecycleEventListener {
   private val tag: String = "ng-ha:${this.javaClass.getSimpleName()}"
   private var brightcoveVideoView = BrightcoveExoPlayerVideoView(context)
-  private var uri: String? = null
   private var accountId: String? = null
   private var videoId: String? = null
   private var policyKey: String? = null
@@ -44,8 +40,6 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
   private var playing = false
   private var inViewPort = true
   private var playbackRate = 1f
-  private var adVideoLoadTimeout = 3000
-  private var bitRate = 0f
   private var frameCounter = 0
 
   constructor(context: Context?) : super(context)
@@ -128,12 +122,6 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
 
   // Props
 
-  fun setUri(uri: String?) {
-    if (uri == null) return
-    this.uri = uri
-    this.loadVideo()
-  }
-
   fun setAccountId(accountId: String?) {
     if (accountId == null) return
     this.accountId = accountId
@@ -185,18 +173,6 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
     val details: MutableMap<String, Any?> = HashMap()
     details.put(Event.VOLUME, volume)
     brightcoveVideoView.getEventEmitter().emit(EventType.SET_VOLUME, details)
-  }
-
-  fun setBitRate(bitRate: Float?) {
-    if (bitRate == null) return
-    this.bitRate = bitRate
-    // updateBitRate()
-  }
-
-  fun setAdVideoLoadTimeout(adVideoLoadTimeout: Int?) {
-    if (adVideoLoadTimeout == null) return
-    this.adVideoLoadTimeout = adVideoLoadTimeout
-    this.loadVideo()
   }
 
   fun setPlaybackRate(playbackRate: Float?) {
@@ -280,19 +256,6 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
   }
 
   private fun loadVideo() {
-    if (uri != null) {
-      val video = Video.createVideo(uri!!, DeliveryType.HLS)
-      try {
-        val myPosterImage =
-          URI("https://sdks.support.brightcove.com/assets/images/general/Great-Blue-Heron.png")
-        video.getProperties().put(Video.Fields.STILL_IMAGE_URI, myPosterImage) // hard coded for now
-      } catch (e: URISyntaxException) {
-        e.printStackTrace()
-      }
-      playVideo(video)
-      return
-    }
-
     if (accountId == null || policyKey == null || videoId == null) return
 
     val eventEmitter = brightcoveVideoView.getEventEmitter()

@@ -15,6 +15,7 @@ class BrightcoveViewPackage : BaseReactPackage() {
   override fun getModule(name: String, reactContext: ReactApplicationContext): NativeModule? =
     when (name) {
       BrightcoveViewManager.NAME -> BrightcoveViewManager()
+      BrightcoveDownloaderModule.NAME -> BrightcoveDownloaderModule(reactContext)
       else -> null
     }
 
@@ -27,6 +28,14 @@ class BrightcoveViewPackage : BaseReactPackage() {
         needsEagerInit = false,
         isCxxModule = false,
         isTurboModule = true,
+      ),
+      BrightcoveDownloaderModule.NAME to ReactModuleInfo(
+        name = BrightcoveDownloaderModule.NAME,
+        className = BrightcoveDownloaderModule.NAME,
+        canOverrideExistingModule = false,
+        needsEagerInit = false,
+        isCxxModule = false,
+        isTurboModule = true
       )
     )
   }

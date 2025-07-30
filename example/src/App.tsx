@@ -1,6 +1,10 @@
 import { useRef, useState } from 'react';
 import { View, StyleSheet, Button } from 'react-native';
-import { BrightcoveView, Commands } from 'react-native-brightcove';
+import {
+  BrightcoveDownloader,
+  BrightcoveView,
+  Commands,
+} from 'react-native-brightcove';
 
 const accountId = '5434391461001';
 const videoId = '6140448705001';
@@ -46,9 +50,6 @@ export default function App() {
       <BrightcoveView
         ref={videoPlayer}
         style={styles.video}
-        // uri={
-        //   'https://sdks.support.brightcove.com/assets/videos/hls/greatblueheron/greatblueheron.m3u8'
-        // }
         accountId={accountId}
         policyKey={policyKey}
         videoId={videoId}
@@ -58,9 +59,7 @@ export default function App() {
         // fullscreen
         disableDefaultControl={false}
         volume={volume}
-        bitRate={0.5}
         playbackRate={1}
-        adVideoLoadTimeout={5000}
         // onReady={(e) => console.log('onReady', e.nativeEvent)}
         // onPlay={(e) => console.log('onPlay', e.nativeEvent)}
         // onPause={(e) => console.log('onPause', e.nativeEvent)}
@@ -70,8 +69,6 @@ export default function App() {
         //   console.log('onUpdateBufferProgress', e.nativeEvent)
         // }
         // onChangeDuration={(e) => console.log('onChangeDuration', e.nativeEvent)}
-        // onAdsLoaded={(e) => console.log('onAdsLoaded', e.nativeEvent)}
-        // onAdsPlaying={(e) => console.log('onAdsPlaying', e.nativeEvent)}
         onEnterFullscreen={(e) =>
           console.log('onEnterFullscreen', e.nativeEvent)
         }
@@ -85,6 +82,10 @@ export default function App() {
       <Button title="Set volume 0.2" onPress={() => setVolume(0.2)} />
       <Button title="Set volume 0.5" onPress={() => setVolume(0.5)} />
       <Button title="Set volume 1" onPress={() => setVolume(1)} />
+      <Button
+        title="Download video"
+        onPress={() => BrightcoveDownloader.downloadVideo('id-testing')}
+      />
     </View>
   );
 }

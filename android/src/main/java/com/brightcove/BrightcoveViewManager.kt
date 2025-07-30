@@ -21,11 +21,6 @@ class BrightcoveViewManager : SimpleViewManager<BrightcoveView>(),
   override fun createViewInstance(context: ThemedReactContext): BrightcoveView =
     BrightcoveView(context)
 
-  @ReactProp(name = "uri")
-  override fun setUri(view: BrightcoveView?, value: String?) {
-    view?.setUri(value)
-  }
-
   @ReactProp(name = "accountId")
   override fun setAccountId(view: BrightcoveView?, value: String?) {
     view?.setAccountId(value)
@@ -69,16 +64,6 @@ class BrightcoveViewManager : SimpleViewManager<BrightcoveView>(),
   @ReactProp(name = "volume")
   override fun setVolume(view: BrightcoveView?, value: Float) {
     view?.setVolume(value)
-  }
-
-  @ReactProp(name = "bitRate")
-  override fun setBitRate(view: BrightcoveView?, value: Float) {
-    view?.setBitRate(value)
-  }
-
-  @ReactProp(name = "adVideoLoadTimeout")
-  override fun setAdVideoLoadTimeout(view: BrightcoveView?, value: Int) {
-    view?.setAdVideoLoadTimeout(value)
   }
 
   @ReactProp(name = "playbackRate")
