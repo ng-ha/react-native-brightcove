@@ -1,6 +1,7 @@
 package com.brightcove
 
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Color
 import android.util.AttributeSet
 import android.util.Log
@@ -18,6 +19,7 @@ import com.brightcove.player.edge.OfflineStoreManager
 import com.brightcove.player.edge.VideoListener
 import com.brightcove.player.event.Event
 import com.brightcove.player.event.EventType
+import com.brightcove.player.mediacontroller.BrightcoveMediaController
 import com.brightcove.player.model.Video
 import com.brightcove.player.view.BrightcoveExoPlayerVideoView
 import com.brightcove.util.BrightcoveEvent
@@ -39,6 +41,9 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
   private var autoPlay = false
   private var playing = false
   private var inViewPort = true
+  private var disableDefaultControl = false
+  private var mediaController: BrightcoveMediaController? = null
+  private val controlTimeout = BrightcoveMediaController.DEFAULT_TIMEOUT
   private var playbackRate = 1f
   private var frameCounter = 0
 
@@ -61,12 +66,12 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
     requestLayout()
     ViewCompat.setTranslationZ(this, 9999f)
 
-    val videoDisplayComponent =
-      brightcoveVideoView.videoDisplay as ExoPlayerVideoDisplayComponent
+    val videoDisplayComponent = brightcoveVideoView.videoDisplay as ExoPlayerVideoDisplayComponent
     videoDisplayComponent.setMediaStore(OfflineStoreManager.getInstance(context))
 
-    val eventEmitter = brightcoveVideoView.getEventEmitter()
+    val eventEmitter = brightcoveVideoView.eventEmitter
     eventEmitter.on(EventType.VIDEO_SIZE_KNOWN) {
+      mediaController = brightcoveVideoView.brightcoveMediaController
       fixVideoLayout()
       updatePlaybackRate()
     }
@@ -190,7 +195,14 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
   }
 
   fun setDisableDefaultControl(disabled: Boolean) {
-
+    disableDefaultControl = disabled
+    if (disabled) {
+      mediaController?.hide()
+      mediaController?.setShowHideTimeout(1)
+    } else {
+      mediaController?.show()
+      mediaController?.setShowHideTimeout(controlTimeout)
+    }
   }
 
   // Commands
@@ -212,7 +224,6 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
     brightcoveVideoView.clear()
     removeAllViews()
     (context as ThemedReactContext).removeLifecycleEventListener(this)
-
   }
 
   fun toggleInViewPort(inViewPort: Boolean) {
@@ -225,6 +236,7 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
   }
 
   fun toggleFullscreen(isFullscreen: Boolean) {
+    setFullscreen(isFullscreen)
   }
 
   // Private methods
@@ -310,6 +322,17 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
   }
 
   // Lifecycle handling
+
+  override fun onConfigurationChanged(configuration: Configuration) {
+    super.onConfigurationChanged(configuration)
+    if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE && !brightcoveVideoView.isFullScreen) {
+      brightcoveVideoView.eventEmitter.emit(EventType.ENTER_FULL_SCREEN)
+      return
+    }
+    if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT && brightcoveVideoView.isFullScreen) {
+      brightcoveVideoView.eventEmitter.emit(EventType.EXIT_FULL_SCREEN)
+    }
+  }
 
   override fun onHostResume() {
     if (autoPlay) play()
