@@ -23,9 +23,10 @@ type TBrightcovePlayerEventBuffer = {
 
 interface NativeProps extends ViewProps {
   accountId?: string | null;
+  policyKey?: string | null;
   playerName?: string | null;
   videoId?: string | null;
-  policyKey?: string | null;
+  referenceId?: string | null;
   autoPlay?: boolean | null;
   play?: boolean | null;
   fullscreen?: boolean | null;

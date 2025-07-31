@@ -41,6 +41,11 @@ class BrightcoveViewManager : SimpleViewManager<BrightcoveView>(),
     view?.setVideoId(value)
   }
 
+  @ReactProp(name = "videoId")
+  override fun setReferenceId(view: BrightcoveView?, value: String?) {
+    view?.setReferenceId(value)
+  }
+
   @ReactProp(name = "autoPlay")
   override fun setAutoPlay(view: BrightcoveView?, value: Boolean) {
     view?.setAutoPlay(value)

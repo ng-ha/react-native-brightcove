@@ -6,10 +6,16 @@ import {
   Commands,
 } from 'react-native-brightcove';
 
-const accountId = '5434391461001';
-const videoId = '6140448705001';
+// const accountId = '5434391461001';
+// const policyKey =
+//   'BCpkADawqM0T8lW3nMChuAbrcunBBHmh4YkNl5e6ZrKQwPiK_Y83RAOF4DP5tyBF_ONBVgrEjqW6fbV0nKRuHvjRU3E8jdT9WMTOXfJODoPML6NUDCYTwTHxtNlr5YdyGYaCPLhMUZ3Xu61L';
+
+const accountId = '5420904993001';
 const policyKey =
-  'BCpkADawqM0T8lW3nMChuAbrcunBBHmh4YkNl5e6ZrKQwPiK_Y83RAOF4DP5tyBF_ONBVgrEjqW6fbV0nKRuHvjRU3E8jdT9WMTOXfJODoPML6NUDCYTwTHxtNlr5YdyGYaCPLhMUZ3Xu61L';
+  'BCpkADawqM1RJu5c_I13hBUAi4c8QNWO5QN2yrd_OgDjTCVsbILeGDxbYy6xhZESTFi68MiSUHzMbQbuLV3q-gvZkJFpym1qYbEwogOqKCXK622KNLPF92tX8AY9a1cVVYCgxSPN12pPAuIM';
+
+const videoId = '6140448705001';
+const referenceId = 'demo_odrm_widevine_dash';
 
 export default function App() {
   const [volume, setVolume] = useState<number | undefined>();
@@ -56,7 +62,8 @@ export default function App() {
         style={styles.video}
         accountId={accountId}
         policyKey={policyKey}
-        videoId={videoId}
+        // videoId={videoId}
+        referenceId={referenceId}
         playerName="ngthanhha"
         autoPlay
         fullscreen={fullscreen}
