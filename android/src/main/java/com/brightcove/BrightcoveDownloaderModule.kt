@@ -10,6 +10,8 @@ import com.brightcove.player.edge.OfflineCatalog
 import com.brightcove.player.edge.OfflineStoreManager
 import com.brightcove.player.edge.PlaylistListener
 import com.brightcove.player.event.Event
+import com.brightcove.player.event.EventEmitter
+import com.brightcove.player.event.EventEmitterImpl
 import com.brightcove.player.model.Playlist
 import com.brightcove.player.model.Video
 import com.brightcove.player.network.ConnectivityMonitor
@@ -24,7 +26,6 @@ import java.io.Serializable
 class BrightcoveDownloaderModule(val reactContext: ReactApplicationContext) :
   NativeBrightcoveDownloaderSpec(reactContext) {
   private val tag: String = "ng-ha:${this.javaClass.getSimpleName()}"
-  private var brightcoveVideoView = BrightcoveExoPlayerVideoView(reactContext)
   private lateinit var catalog: OfflineCatalog
   private var connectivityMonitor: ConnectivityMonitor? = null
   private lateinit var httpRequestConfig: HttpRequestConfig
@@ -36,14 +37,15 @@ class BrightcoveDownloaderModule(val reactContext: ReactApplicationContext) :
 
   init {
     ConnectivityMonitor.getInstance(reactContext).addListener(connectivityListener)
-    catalog.addDownloadEventListener(downloadEventListener)
+    // catalog.addDownloadEventListener(downloadEventListener)
   }
 
   override fun downloadVideo(id: String?) {
     Log.d(tag, "downloadVideo $id")
 
     connectivityMonitor = ConnectivityMonitor.getInstance(reactContext)
-    val eventEmitter = brightcoveVideoView.eventEmitter
+
+    val eventEmitter: EventEmitter = EventEmitterImpl()
 
     catalog = OfflineCatalog.Builder(reactContext, eventEmitter, "5420904993001")
       .setBaseURL(Catalog.DEFAULT_EDGE_BASE_URL)
@@ -55,44 +57,41 @@ class BrightcoveDownloaderModule(val reactContext: ReactApplicationContext) :
     catalog.isMeteredDownloadAllowed = false
     catalog.isRoamingDownloadAllowed = false
 
-    val videoDisplayComponent =
-      brightcoveVideoView.videoDisplay as ExoPlayerVideoDisplayComponent
-    videoDisplayComponent.setMediaStore(OfflineStoreManager.getInstance(reactContext))
   }
 
   private fun updateVideoList() {
 
-    if (connectivityMonitor?.isConnected == true) {
-
-
-      val httpRequestConfigBuilder = HttpRequestConfig.Builder()
-      httpRequestConfigBuilder.setBrightcoveAuthorizationToken(pasToken)
-      httpRequestConfig = httpRequestConfigBuilder.build()
-      playlist.findPlaylist(catalog, httpRequestConfig, object : PlaylistListener() {
-        override fun onPlaylist(playlist: Playlist) {
-          onVideoListUpdated(false)
-          brightcoveVideoView.addAll(playlist.videos)
-        }
-
-        override fun onError(errors: List<CatalogError>) {
-          super.onError(errors)
-        }
-      })
-    } else {
-      catalog.findAllVideoDownload(
-        DownloadStatus.STATUS_COMPLETE,
-        object : OfflineCallback<List<Video?>?> {
-          override fun onSuccess(videos: List<Video?>?) {
-            onVideoListUpdated(false)
-            brightcoveVideoView.clear()
-            brightcoveVideoView.addAll(videos)
-          }
-
-          override fun onFailure(throwable: Throwable) {
-            Log.e(TAG, "Error fetching all videos downloaded: ", throwable)
-          }
-        })
-    }
+    // if (connectivityMonitor?.isConnected == true) {
+    //
+    //
+    //   val httpRequestConfigBuilder = HttpRequestConfig.Builder()
+    //   httpRequestConfigBuilder.setBrightcoveAuthorizationToken(pasToken)
+    //   httpRequestConfig = httpRequestConfigBuilder.build()
+    //   playlist.findPlaylist(catalog, httpRequestConfig, object : PlaylistListener() {
+    //     override fun onPlaylist(playlist: Playlist) {
+    //       onVideoListUpdated(false)
+    //       brightcoveVideoView.addAll(playlist.videos)
+    //     }
+    //
+    //     override fun onError(errors: List<CatalogError>) {
+    //       super.onError(errors)
+    //     }
+    //   })
+    // } else {
+    //   catalog.findAllVideoDownload(
+    //     DownloadStatus.STATUS_COMPLETE,
+    //     object : OfflineCallback<List<Video?>?> {
+    //       override fun onSuccess(videos: List<Video?>?) {
+    //         onVideoListUpdated(false)
+    //         brightcoveVideoView.clear()
+    //         brightcoveVideoView.addAll(videos)
+    //       }
+    //
+    //       override fun onFailure(throwable: Throwable) {
+    //         Log.e(TAG, "Error fetching all videos downloaded: ", throwable)
+    //       }
+    //     })
+    // }
   }
 
 
@@ -154,16 +153,16 @@ class BrightcoveDownloaderModule(val reactContext: ReactApplicationContext) :
   }
 
   private fun onDownloadRemoved(video: Video) {
-    if (connectivityMonitor?.isConnected == true) {
-      // Fetch the video object again to avoid using the given video that may have been
-      // tainted by previous download.
-      catalog.findVideoByID(video.id, object : FindVideoListener(video) {
-        override fun onVideo(newVideo: Video) {
-        }
-      })
-    } else {
-      onVideoListUpdated(false)
-    }
+    // if (connectivityMonitor?.isConnected == true) {
+    //   // Fetch the video object again to avoid using the given video that may have been
+    //   // tainted by previous download.
+    //   catalog.findVideoByID(video.id, object : FindVideoListener(video) {
+    //     override fun onVideo(newVideo: Video) {
+    //     }
+    //   })
+    // } else {
+    //   onVideoListUpdated(false)
+    // }
   }
 
   override fun pauseVideoDownload(id: String?) {
