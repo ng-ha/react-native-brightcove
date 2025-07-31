@@ -15,12 +15,19 @@ import androidx.media3.common.PlaybackParameters
 import com.brightcove.player.display.ExoPlayerVideoDisplayComponent
 import com.brightcove.player.edge.Catalog
 import com.brightcove.player.edge.CatalogError
+import com.brightcove.player.edge.OfflineCallback
+import com.brightcove.player.edge.OfflineCatalog
 import com.brightcove.player.edge.OfflineStoreManager
+import com.brightcove.player.edge.PlaylistListener
 import com.brightcove.player.edge.VideoListener
 import com.brightcove.player.event.Event
 import com.brightcove.player.event.EventType
 import com.brightcove.player.mediacontroller.BrightcoveMediaController
+import com.brightcove.player.model.Playlist
 import com.brightcove.player.model.Video
+import com.brightcove.player.network.ConnectivityMonitor
+import com.brightcove.player.network.DownloadStatus
+import com.brightcove.player.network.HttpRequestConfig
 import com.brightcove.player.view.BrightcoveExoPlayerVideoView
 import com.brightcove.util.BrightcoveEvent
 import com.brightcove.util.EventFactory
@@ -34,7 +41,9 @@ import com.facebook.react.uimanager.UIManagerHelper
 class BrightcoveView : RelativeLayout, LifecycleEventListener {
   private val tag: String = "ng-ha:${this.javaClass.getSimpleName()}"
   private var brightcoveVideoView = BrightcoveExoPlayerVideoView(context)
+  private var catalog: OfflineCatalog? = null
   private var accountId: String? = null
+  private var referenceId: String? = null
   private var videoId: String? = null
   private var policyKey: String? = null
   private var playerName: String? = null
@@ -46,6 +55,10 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
   private val controlTimeout = BrightcoveMediaController.DEFAULT_TIMEOUT
   private var playbackRate = 1f
   private var frameCounter = 0
+  private var stopFrameCounter = false
+  private val connectivityMonitor: ConnectivityMonitor
+  private val connectivityListener = ConnectivityMonitor.Listener { _, _ -> loadVideo() }
+  private val pasToken = "YOUR_PAS_TOKEN"
 
   constructor(context: Context?) : super(context)
 
@@ -57,12 +70,12 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
 
   init {
     (context as ThemedReactContext).addLifecycleEventListener(this)
+    connectivityMonitor = ConnectivityMonitor.getInstance(context)
     setBackgroundColor(Color.BLACK)
     addView(brightcoveVideoView)
     brightcoveVideoView.layoutParams =
       LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
     brightcoveVideoView.finishInitialization()
-    setupLayout()
     requestLayout()
     ViewCompat.setTranslationZ(this, 9999f)
 
@@ -138,6 +151,12 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
   fun setVideoId(videoId: String?) {
     if (videoId == null) return
     this.videoId = videoId
+    this.loadVideo()
+  }
+
+  fun setReferenceId(referenceId: String?) {
+    if (referenceId == null) return
+    this.referenceId = referenceId
     this.loadVideo()
   }
 
@@ -268,12 +287,59 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
   }
 
   private fun loadVideo() {
-    if (accountId == null || policyKey == null || videoId == null) return
+    if (accountId == null || policyKey == null) return
 
     val eventEmitter = brightcoveVideoView.getEventEmitter()
-    val catalog = Catalog.Builder(eventEmitter, accountId!!).setPolicy(policyKey!!).build()
 
-    catalog.findVideoByID(videoId!!, object : VideoListener() {
+    catalog = OfflineCatalog.Builder(context, eventEmitter, accountId!!)
+      .setBaseURL(Catalog.DEFAULT_EDGE_BASE_URL)
+      .setPolicy(policyKey!!)
+      .build()
+      .apply {
+        isMobileDownloadAllowed = true
+        isMeteredDownloadAllowed = false
+        isRoamingDownloadAllowed = false
+      }
+
+    if (connectivityMonitor.isConnected && referenceId != null) {
+      val httpRequestConfig = HttpRequestConfig
+        .Builder()
+        .setBrightcoveAuthorizationToken(pasToken)
+        .build()
+
+      catalog?.findPlaylistByReferenceID(
+        referenceId!!,
+        httpRequestConfig,
+        object : PlaylistListener() {
+          override fun onPlaylist(playlist: Playlist) {
+            brightcoveVideoView.addAll(playlist.videos)
+            if (autoPlay) brightcoveVideoView.start()
+          }
+
+          override fun onError(errors: List<CatalogError>) {
+            super.onError(errors)
+            Log.d(tag, "onError: $errors")
+          }
+        })
+    } else {
+      catalog?.findAllVideoDownload(
+        DownloadStatus.STATUS_COMPLETE,
+        object : OfflineCallback<List<Video?>?> {
+          override fun onSuccess(videos: List<Video?>?) {
+            brightcoveVideoView.clear()
+            brightcoveVideoView.addAll(videos)
+            if (autoPlay) brightcoveVideoView.start()
+          }
+
+          override fun onFailure(throwable: Throwable) {
+            Log.e(tag, "Error fetching all videos downloaded: ", throwable)
+          }
+        })
+    }
+
+    if (videoId == null) return
+
+    catalog?.findVideoByID(videoId!!, object : VideoListener() {
       override fun onVideo(video: Video?) {
         playVideo(video)
       }
@@ -305,7 +371,9 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
           getViewTreeObserver().dispatchOnGlobalLayout()
           frameCounter = 1
         }
-        Choreographer.getInstance().postFrameCallback(this)
+        if (!stopFrameCounter) {
+          Choreographer.getInstance().postFrameCallback(this)
+        }
       }
     })
   }
@@ -337,12 +405,17 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
   override fun onHostResume() {
     if (autoPlay) play()
     toggleInViewPort(true)
+    stopFrameCounter = false
+    setupLayout()
+    connectivityMonitor.addListener(connectivityListener)
     Log.d(tag, "onHostResume")
   }
 
   override fun onHostPause() {
     pause()
     toggleInViewPort(false)
+    stopFrameCounter = true
+    connectivityMonitor.removeListener(connectivityListener)
     Log.d(tag, "onHostPause")
   }
 
