@@ -366,7 +366,6 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
       override fun doFrame(frameTimeNanos: Long) {
         frameCounter++
         if (frameCounter == 1 || frameCounter >= 60) {
-          Log.d(tag, "doFrame")
           manuallyLayoutChildren()
           getViewTreeObserver().dispatchOnGlobalLayout()
           frameCounter = 1

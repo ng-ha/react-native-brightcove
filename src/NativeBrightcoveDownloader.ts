@@ -27,14 +27,24 @@ export type TBrightcoveDownloadedVideo = {
   size?: Int32 | null;
 };
 
+export type TBrightcovePauseDownloadResult = {
+  status?: Int32 | null;
+};
+export type TBrightcoveResumeDownloadResult = {
+  status?: Int32 | null;
+};
+export type TBrightcoveDeleteVideoResult = {
+  result?: boolean | null;
+};
+
 export interface Spec extends TurboModule {
   initModule(config: TBrightcoveDownloadConfig): void;
   deinitModule(): void;
   getDownloadedVideos(): Promise<TBrightcoveDownloadedVideo[]>;
   downloadVideo(id: string): void;
-  pauseVideoDownload(id: string): void;
-  resumeVideoDownload(id: string): void;
-  deleteVideo(id: string): void;
+  pauseVideoDownload(id: string): Promise<TBrightcovePauseDownloadResult>;
+  resumeVideoDownload(id: string): Promise<TBrightcoveResumeDownloadResult>;
+  deleteVideo(id: string): Promise<TBrightcoveDeleteVideoResult>;
   readonly onDownloadRequested: EventEmitter<TBrightcoveDownloaderParams>;
   readonly onDownloadStarted: EventEmitter<TBrightcoveDownloaderParams>;
   readonly onDownloadProgress: EventEmitter<TBrightcoveDownloaderParams>;

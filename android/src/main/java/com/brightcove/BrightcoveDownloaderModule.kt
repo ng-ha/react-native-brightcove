@@ -97,7 +97,6 @@ class BrightcoveDownloaderModule(val reactContext: ReactApplicationContext) :
   }
 
   override fun downloadVideo(id: String?) {
-    Log.d(tag, "downloadVideo $id")
     if (id == null) return
 
     val httpRequestConfig = HttpRequestConfig
@@ -111,9 +110,7 @@ class BrightcoveDownloaderModule(val reactContext: ReactApplicationContext) :
         catalog?.getMediaFormatTracksAvailable(video) { mediaDownloadable, bundle ->
           BrightcoveDownloadUtil.selectMediaFormatTracksAvailable(mediaDownloadable, bundle)
           catalog?.downloadVideo(video, object : OfflineCallback<DownloadStatus?> {
-            override fun onSuccess(downloadStatus: DownloadStatus?) {
-              Log.d(tag, "download video $id successfully $downloadStatus")
-            }
+            override fun onSuccess(downloadStatus: DownloadStatus?) {}
 
             override fun onFailure(throwable: Throwable) {
               Log.e(tag, "Error initializing video download: ", throwable)
@@ -124,46 +121,59 @@ class BrightcoveDownloaderModule(val reactContext: ReactApplicationContext) :
     })
   }
 
-  override fun pauseVideoDownload(videoId: String?) {
-    Log.d(tag, "pauseVideoDownload $videoId")
-    if (videoId == null) return
+  override fun pauseVideoDownload(id: String?, promise: Promise?) {
+    if (id == null || catalog == null) {
+      promise?.reject("1", "ID or catalog is null")
+      return
+    }
 
-    catalog?.pauseVideoDownload(videoId, object : OfflineCallback<Int?> {
+    catalog?.pauseVideoDownload(id, object : OfflineCallback<Int?> {
       override fun onSuccess(status: Int?) {
-        Log.d(tag, "Video download was paused successfully $status ")
+        val payload = Arguments.createMap().apply { if (status != null) putInt("status", status) }
+        promise?.resolve(payload)
       }
 
       override fun onFailure(throwable: Throwable) {
+        promise?.reject("3", "Error pausing video download", throwable)
         Log.e(tag, "Error pausing video download: ", throwable)
       }
     })
   }
 
-  override fun resumeVideoDownload(videoId: String?) {
-    Log.d(tag, "resumeVideoDownload $videoId")
-    if (videoId == null) return
+  override fun resumeVideoDownload(id: String?, promise: Promise?) {
+    if (id == null || catalog == null) {
+      promise?.reject("1", "ID or catalog is null")
+      return
+    }
 
-    catalog?.resumeVideoDownload(videoId, object : OfflineCallback<Int?> {
+    catalog?.resumeVideoDownload(id, object : OfflineCallback<Int?> {
       override fun onSuccess(status: Int?) {
-        Log.d(tag, " Video download was resumed successfully $status ")
+        val payload = Arguments.createMap().apply { if (status != null) putInt("status", status) }
+        promise?.resolve(payload)
       }
 
       override fun onFailure(throwable: Throwable) {
+        promise?.reject("4", "Error resuming video download", throwable)
         Log.e(tag, "Error resuming video download: ", throwable)
       }
     })
   }
 
-  override fun deleteVideo(videoId: String?) {
-    Log.d(tag, "deleteVideo $videoId")
-    if (videoId == null) return
+  override fun deleteVideo(id: String?, promise: Promise?) {
+    if (id == null || catalog == null) {
+      promise?.reject("1", "ID or catalog is null")
+      return
+    }
 
-    catalog?.deleteVideo(videoId, object : OfflineCallback<Boolean?> {
+    catalog?.deleteVideo(id, object : OfflineCallback<Boolean?> {
       override fun onSuccess(result: Boolean?) {
-        Log.d(tag, "Video was deleted successfully $result ")
+        val payload =
+          Arguments.createMap().apply { if (result != null) putBoolean("result", result) }
+        promise?.resolve(payload)
       }
 
       override fun onFailure(throwable: Throwable) {
+        promise?.reject("5", "Error deleting video", throwable)
         Log.e(tag, "Error deleting video: ", throwable)
       }
     })
