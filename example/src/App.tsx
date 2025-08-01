@@ -21,7 +21,7 @@ const accountId = '5420904993001';
 const policyKey =
   'BCpkADawqM1RJu5c_I13hBUAi4c8QNWO5QN2yrd_OgDjTCVsbILeGDxbYy6xhZESTFi68MiSUHzMbQbuLV3q-gvZkJFpym1qYbEwogOqKCXK622KNLPF92tX8AY9a1cVVYCgxSPN12pPAuIM';
 
-const playlistReferenceId = 'demo_odrm_widevine_dash';
+// const playlistReferenceId = 'demo_odrm_widevine_dash';
 
 const videoIds = [
   '5421538222001',
@@ -132,8 +132,7 @@ export default function App() {
         style={styles.video}
         accountId={accountId}
         policyKey={policyKey}
-        // videoId={videoId}
-        playlistReferenceId={playlistReferenceId}
+        videoId={videoIds[0] as string}
         playerName="ngthanhha"
         autoPlay
         fullscreen={fullscreen}

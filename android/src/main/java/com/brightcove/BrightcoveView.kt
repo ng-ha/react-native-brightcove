@@ -283,7 +283,7 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
   }
 
   private fun loadVideo() {
-    if (accountId == null || policyKey == null) return
+    if (accountId == null || policyKey == null || videoId == null) return
 
     val eventEmitter = brightcoveVideoView.getEventEmitter()
 
@@ -296,6 +296,32 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
         isMeteredDownloadAllowed = false
         isRoamingDownloadAllowed = false
       }
+
+    catalog?.findAllVideoDownload(
+      DownloadStatus.STATUS_COMPLETE,
+      object : OfflineCallback<List<Video?>?> {
+        override fun onSuccess(videos: List<Video?>?) {
+          val video = videos?.find { it?.id == videoId }
+          if (video == null) return
+          playVideo(video)
+        }
+
+        override fun onFailure(throwable: Throwable) {
+          Log.e(tag, "Error fetching all videos downloaded: ", throwable)
+        }
+      })
+
+    // if (videoId != null) {
+    //   catalog?.findVideoByID(videoId!!, object : VideoListener() {
+    //     override fun onVideo(video: Video?) {
+    //       playVideo(video)
+    //     }
+    //
+    //     override fun onError(error: MutableList<CatalogError?>) {
+    //       Log.e(tag, "onError catalog.findVideoByID $error")
+    //     }
+    //   })
+    // }
 
     if (playlistReferenceId != null) {
       val httpRequestConfig = HttpRequestConfig
@@ -317,33 +343,7 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
             Log.d(tag, "onError: $errors")
           }
         })
-    } else {
-      catalog?.findAllVideoDownload(
-        DownloadStatus.STATUS_COMPLETE,
-        object : OfflineCallback<List<Video?>?> {
-          override fun onSuccess(videos: List<Video?>?) {
-            brightcoveVideoView.clear()
-            brightcoveVideoView.addAll(videos)
-            if (autoPlay) brightcoveVideoView.start()
-          }
-
-          override fun onFailure(throwable: Throwable) {
-            Log.e(tag, "Error fetching all videos downloaded: ", throwable)
-          }
-        })
     }
-
-    if (videoId == null) return
-
-    catalog?.findVideoByID(videoId!!, object : VideoListener() {
-      override fun onVideo(video: Video?) {
-        playVideo(video)
-      }
-
-      override fun onError(error: MutableList<CatalogError?>) {
-        Log.e(tag, "onError catalog.findVideoByID $error")
-      }
-    })
   }
 
   private fun playVideo(video: Video?) {
