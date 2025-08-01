@@ -2,102 +2,176 @@ package com.brightcove
 
 import android.text.format.Formatter
 import android.util.Log
-import com.brightcove.player.display.ExoPlayerVideoDisplayComponent
 import com.brightcove.player.edge.Catalog
-import com.brightcove.player.edge.CatalogError
 import com.brightcove.player.edge.OfflineCallback
 import com.brightcove.player.edge.OfflineCatalog
-import com.brightcove.player.edge.OfflineStoreManager
-import com.brightcove.player.edge.PlaylistListener
+import com.brightcove.player.edge.VideoListener
 import com.brightcove.player.event.Event
 import com.brightcove.player.event.EventEmitter
 import com.brightcove.player.event.EventEmitterImpl
-import com.brightcove.player.model.Playlist
 import com.brightcove.player.model.Video
-import com.brightcove.player.network.ConnectivityMonitor
 import com.brightcove.player.network.DownloadStatus
 import com.brightcove.player.network.HttpRequestConfig
 import com.brightcove.player.offline.MediaDownloadable.DownloadEventListener
-import com.brightcove.player.view.BrightcoveExoPlayerVideoView
-import com.brightcove.player.view.BrightcovePlayer.TAG
+import com.brightcove.util.BrightcoveDownloadUtil
+import com.facebook.react.bridge.Arguments
+import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
+import com.facebook.react.bridge.ReadableMap
 import java.io.Serializable
 
 class BrightcoveDownloaderModule(val reactContext: ReactApplicationContext) :
   NativeBrightcoveDownloaderSpec(reactContext) {
-  private val tag: String = "ng-ha:${this.javaClass.getSimpleName()}"
-  private lateinit var catalog: OfflineCatalog
-  private var connectivityMonitor: ConnectivityMonitor? = null
-  private lateinit var httpRequestConfig: HttpRequestConfig
-  private val pasToken = "YOUR_PAS_TOKEN"
+  private val tag: String = "ng-ha:${this.javaClass.simpleName}"
+  private var accountId: String? = null
+  private var policyKey: String? = null
+  private var pasToken = "YOUR_PAS_TOKEN"
+  private var catalog: OfflineCatalog? = null
 
   override fun getName() = NAME
 
-  private val connectivityListener = ConnectivityMonitor.Listener { _, _ -> updateVideoList() }
+  override fun initModule(config: ReadableMap?) {
+    val accountId = config?.getString("accountId")
+    val policyKey = config?.getString("policyKey")
+    if (accountId == null || policyKey == null) return
+    this.accountId = accountId
+    this.policyKey = policyKey
 
-  init {
-    ConnectivityMonitor.getInstance(reactContext).addListener(connectivityListener)
-    // catalog.addDownloadEventListener(downloadEventListener)
+    val eventEmitter: EventEmitter = EventEmitterImpl()
+    catalog = OfflineCatalog.Builder(reactContext, eventEmitter, accountId)
+      .setBaseURL(Catalog.DEFAULT_EDGE_BASE_URL)
+      .setPolicy(policyKey)
+      .build()
+      .apply {
+        isMobileDownloadAllowed = true
+        isMeteredDownloadAllowed = false
+        isRoamingDownloadAllowed = false
+      }
+    catalog?.addDownloadEventListener(downloadEventListener)
+  }
+
+  override fun deinitModule() {
+    catalog?.removeDownloadEventListener(downloadEventListener)
+  }
+
+  override fun invalidate() {
+    catalog?.removeDownloadEventListener(downloadEventListener)
+  }
+
+  override fun getDownloadedVideos(promise: Promise?) {
+    if (catalog == null) {
+      promise?.reject("1", "Catalog is null")
+      return
+    }
+
+    catalog?.findAllVideoDownload(
+      DownloadStatus.STATUS_COMPLETE,
+      object : OfflineCallback<List<Video?>?> {
+        override fun onSuccess(videos: List<Video?>?) {
+          val result = Arguments.createArray()
+          videos?.forEach { video ->
+            if (video == null) return@forEach
+            val videoInfo = Arguments.createMap().apply {
+              putString("id", video.id)
+              putString("referenceId", video.referenceId)
+              putString("name", video.name)
+              putLong("duration", video.durationLong)
+              putString("shortDescription", video.description)
+              video.longDescription?.let { putString("longDescription", it) }
+              video.thumbnail?.let { putString("thumbnailUri", it.toString()) }
+              video.posterImage?.let { putString("posterUri", it.toString()) }
+              video.licenseExpiryDate?.let { putString("licenseExpiryDate", it.toString()) }
+              catalog?.estimateSize(video)?.let { putLong("size", it) }
+            }
+            result.pushMap(videoInfo)
+          }
+          Log.d(tag, "downloaded videos: $result")
+          promise?.resolve(result)
+        }
+
+        override fun onFailure(throwable: Throwable) {
+          Log.e(tag, "Error fetching downloaded videos: ", throwable)
+          promise?.reject("2", "Error fetching downloaded videos", throwable)
+        }
+      })
   }
 
   override fun downloadVideo(id: String?) {
     Log.d(tag, "downloadVideo $id")
+    if (id == null) return
 
-    connectivityMonitor = ConnectivityMonitor.getInstance(reactContext)
-
-    val eventEmitter: EventEmitter = EventEmitterImpl()
-
-    catalog = OfflineCatalog.Builder(reactContext, eventEmitter, "5420904993001")
-      .setBaseURL(Catalog.DEFAULT_EDGE_BASE_URL)
-      .setPolicy("BCpkADawqM1RJu5c_I13hBUAi4c8QNWO5QN2yrd_OgDjTCVsbILeGDxbYy6xhZESTFi68MiSUHzMbQbuLV3q-gvZkJFpym1qYbEwogOqKCXK622KNLPF92tX8AY9a1cVVYCgxSPN12pPAuIM")
+    val httpRequestConfig = HttpRequestConfig
+      .Builder()
+      .setBrightcoveAuthorizationToken(pasToken)
       .build()
 
-    // Configure downloads through the catalog.
-    catalog.isMobileDownloadAllowed = true
-    catalog.isMeteredDownloadAllowed = false
-    catalog.isRoamingDownloadAllowed = false
+    catalog?.findVideoByID(id, httpRequestConfig, object : VideoListener() {
+      override fun onVideo(video: Video?) {
+        if (video == null) return;
+        catalog?.getMediaFormatTracksAvailable(video) { mediaDownloadable, bundle ->
+          BrightcoveDownloadUtil.selectMediaFormatTracksAvailable(mediaDownloadable, bundle)
+          catalog?.downloadVideo(video, object : OfflineCallback<DownloadStatus?> {
+            override fun onSuccess(downloadStatus: DownloadStatus?) {
+              Log.d(tag, "download video $id successfully $downloadStatus")
+            }
 
+            override fun onFailure(throwable: Throwable) {
+              Log.e(tag, "Error initializing video download: ", throwable)
+            }
+          })
+        }
+      }
+    })
   }
 
-  private fun updateVideoList() {
+  override fun pauseVideoDownload(videoId: String?) {
+    Log.d(tag, "pauseVideoDownload $videoId")
+    if (videoId == null) return
 
-    // if (connectivityMonitor?.isConnected == true) {
-    //
-    //
-    //   val httpRequestConfigBuilder = HttpRequestConfig.Builder()
-    //   httpRequestConfigBuilder.setBrightcoveAuthorizationToken(pasToken)
-    //   httpRequestConfig = httpRequestConfigBuilder.build()
-    //   playlist.findPlaylist(catalog, httpRequestConfig, object : PlaylistListener() {
-    //     override fun onPlaylist(playlist: Playlist) {
-    //       onVideoListUpdated(false)
-    //       brightcoveVideoView.addAll(playlist.videos)
-    //     }
-    //
-    //     override fun onError(errors: List<CatalogError>) {
-    //       super.onError(errors)
-    //     }
-    //   })
-    // } else {
-    //   catalog.findAllVideoDownload(
-    //     DownloadStatus.STATUS_COMPLETE,
-    //     object : OfflineCallback<List<Video?>?> {
-    //       override fun onSuccess(videos: List<Video?>?) {
-    //         onVideoListUpdated(false)
-    //         brightcoveVideoView.clear()
-    //         brightcoveVideoView.addAll(videos)
-    //       }
-    //
-    //       override fun onFailure(throwable: Throwable) {
-    //         Log.e(TAG, "Error fetching all videos downloaded: ", throwable)
-    //       }
-    //     })
-    // }
+    catalog?.pauseVideoDownload(videoId, object : OfflineCallback<Int?> {
+      override fun onSuccess(status: Int?) {
+        Log.d(tag, "Video download was paused successfully $status ")
+      }
+
+      override fun onFailure(throwable: Throwable) {
+        Log.e(tag, "Error pausing video download: ", throwable)
+      }
+    })
   }
 
+  override fun resumeVideoDownload(videoId: String?) {
+    Log.d(tag, "resumeVideoDownload $videoId")
+    if (videoId == null) return
 
-  private val downloadEventListener: DownloadEventListener = object : DownloadEventListener {
+    catalog?.resumeVideoDownload(videoId, object : OfflineCallback<Int?> {
+      override fun onSuccess(status: Int?) {
+        Log.d(tag, " Video download was resumed successfully $status ")
+      }
+
+      override fun onFailure(throwable: Throwable) {
+        Log.e(tag, "Error resuming video download: ", throwable)
+      }
+    })
+  }
+
+  override fun deleteVideo(videoId: String?) {
+    Log.d(tag, "deleteVideo $videoId")
+    if (videoId == null) return
+
+    catalog?.deleteVideo(videoId, object : OfflineCallback<Boolean?> {
+      override fun onSuccess(result: Boolean?) {
+        Log.d(tag, "Video was deleted successfully $result ")
+      }
+
+      override fun onFailure(throwable: Throwable) {
+        Log.e(tag, "Error deleting video: ", throwable)
+      }
+    })
+  }
+
+  private val downloadEventListener = object : DownloadEventListener {
     override fun onDownloadRequested(video: Video) {
-      Log.i(TAG, "Starting to process ${video.name} video download request")
+      Log.d(tag, "Starting to process ${video.name} video download request")
     }
 
     override fun onDownloadStarted(
@@ -105,76 +179,49 @@ class BrightcoveDownloaderModule(val reactContext: ReactApplicationContext) :
       estimatedSize: Long,
       mediaProperties: Map<String, Serializable>,
     ) {
-      val message = "Started to download '${video.name}' video. Estimated = ${
-        Formatter.formatFileSize(
-          reactContext,
-          estimatedSize
+      Log.d(
+        tag, String.format(
+          "Started to download '%s' video. Estimated = %s, width = %s, height = %s, mimeType = %s",
+          video.name,
+          Formatter.formatFileSize(reactContext, estimatedSize),
+          mediaProperties[Event.RENDITION_WIDTH],
+          mediaProperties[Event.RENDITION_HEIGHT],
+          mediaProperties[Event.RENDITION_MIME_TYPE]
         )
-      }, width = ${mediaProperties[Event.RENDITION_WIDTH]}, height = ${mediaProperties[Event.RENDITION_HEIGHT]}, mimeType = ${mediaProperties[Event.RENDITION_MIME_TYPE]}"
-      Log.i(TAG, message)
+      )
     }
 
     override fun onDownloadProgress(video: Video, status: DownloadStatus) {
-      Log.i(
-        TAG, String.format(
+      Log.d(
+        tag, String.format(
           "Downloaded %s out of %s of '%s' video. Progress %3.2f",
           Formatter.formatFileSize(reactContext, status.bytesDownloaded),
           Formatter.formatFileSize(reactContext, status.maxSize),
-          video.name, status.progress
+          video.name,
+          status.progress
         )
       )
     }
 
     override fun onDownloadPaused(video: Video, status: DownloadStatus) {
-      Log.i(TAG, "Paused download of '${video.name}' video: Reason #${status.reason}")
+      Log.d(tag, "Paused download of '${video.name}' video: Reason #${status.reason}")
     }
 
     override fun onDownloadCompleted(video: Video, status: DownloadStatus) {
-      val message = "Successfully saved '${video.name}' video"
-      Log.i(TAG, message)
+      Log.d(tag, "Successfully saved '${video.name}' video")
     }
 
     override fun onDownloadCanceled(video: Video) {
-      // No need to update UI here because it will be handled by the deleteVideo method.
-      val message = "Cancelled download of '${video.name}' video removed"
-      Log.i(TAG, message)
+      Log.d(tag, "Cancelled download of '${video.name}' video removed")
     }
 
     override fun onDownloadDeleted(video: Video) {
-      // No need to update UI here because it will be handled by the deleteVideo method.
-      val message = "Offline copy of '${video.name}' video removed"
-      Log.i(TAG, message)
+      Log.d(tag, "Offline copy of '${video.name}' video removed")
     }
 
     override fun onDownloadFailed(video: Video, status: DownloadStatus) {
-      val message = "Failed to download '${video.name}' video: Error #${status.reason}"
-      Log.e(TAG, message)
+      Log.e(tag, "Failed to download '${video.name}' video: Error #${status.reason}")
     }
-  }
-
-  private fun onDownloadRemoved(video: Video) {
-    // if (connectivityMonitor?.isConnected == true) {
-    //   // Fetch the video object again to avoid using the given video that may have been
-    //   // tainted by previous download.
-    //   catalog.findVideoByID(video.id, object : FindVideoListener(video) {
-    //     override fun onVideo(newVideo: Video) {
-    //     }
-    //   })
-    // } else {
-    //   onVideoListUpdated(false)
-    // }
-  }
-
-  override fun pauseVideoDownload(id: String?) {
-    Log.d(tag, "pauseVideoDownload $id")
-  }
-
-  override fun resumeVideoDownload(id: String?) {
-    Log.d(tag, "resumeVideoDownload $id")
-  }
-
-  override fun deleteVideo(id: String?) {
-    Log.d(tag, "deleteVideo $id")
   }
 
   companion object {

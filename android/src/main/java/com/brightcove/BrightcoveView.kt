@@ -39,11 +39,11 @@ import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.UIManagerHelper
 
 class BrightcoveView : RelativeLayout, LifecycleEventListener {
-  private val tag: String = "ng-ha:${this.javaClass.getSimpleName()}"
+  private val tag: String = "ng-ha:${this.javaClass.simpleName}"
   private var brightcoveVideoView = BrightcoveExoPlayerVideoView(context)
   private var catalog: OfflineCatalog? = null
   private var accountId: String? = null
-  private var referenceId: String? = null
+  private var playlistReferenceId: String? = null
   private var videoId: String? = null
   private var policyKey: String? = null
   private var playerName: String? = null
@@ -154,9 +154,9 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
     this.loadVideo()
   }
 
-  fun setReferenceId(referenceId: String?) {
-    if (referenceId == null) return
-    this.referenceId = referenceId
+  fun setPlaylistReferenceId(playlistReferenceId: String?) {
+    if (playlistReferenceId == null) return
+    this.playlistReferenceId = playlistReferenceId
     this.loadVideo()
   }
 
@@ -301,14 +301,14 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
         isRoamingDownloadAllowed = false
       }
 
-    if (connectivityMonitor.isConnected && referenceId != null) {
+    if (connectivityMonitor.isConnected && playlistReferenceId != null) {
       val httpRequestConfig = HttpRequestConfig
         .Builder()
         .setBrightcoveAuthorizationToken(pasToken)
         .build()
 
       catalog?.findPlaylistByReferenceID(
-        referenceId!!,
+        playlistReferenceId!!,
         httpRequestConfig,
         object : PlaylistListener() {
           override fun onPlaylist(playlist: Playlist) {
