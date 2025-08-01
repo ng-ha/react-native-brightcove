@@ -42,34 +42,34 @@ export default function App() {
   useEffect(() => {
     BrightcoveDownloader.initModule({ accountId, policyKey });
     BrightcoveDownloader.getDownloadedVideos()
-      .then((res) => console.log('[downloaded video]', res))
-      .catch((e) => console.log('[get downloaded video error]', e));
+      .then((res) => console.log('[getDownloadedVideos OK]', res))
+      .catch((e) => console.log('[getDownloadedVideos ERROR]', e));
 
     const listeners: EventSubscription[] = [];
     listeners.push(
       BrightcoveDownloader.onDownloadRequested((e) => {
-        console.log('onDownloadRequested', e);
+        console.log('[onDownloadRequested]', e);
       }),
       BrightcoveDownloader.onDownloadStarted((e) => {
-        console.log('onDownloadStarted', e);
+        console.log('[onDownloadStarted]', e);
       }),
       BrightcoveDownloader.onDownloadProgress((e) => {
-        console.log('onDownloadProgress', e);
+        console.log('[onDownloadProgress]', e);
       }),
       BrightcoveDownloader.onDownloadPaused((e) => {
-        console.log('onDownloadPaused', e);
+        console.log('[onDownloadPaused]', e);
       }),
       BrightcoveDownloader.onDownloadCompleted((e) => {
-        console.log('onDownloadCompleted', e);
+        console.log('[onDownloadCompleted]', e);
       }),
       BrightcoveDownloader.onDownloadFailed((e) => {
-        console.log('onDownloadFailed', e);
+        console.log('[onDownloadFailed]', e);
       }),
       BrightcoveDownloader.onDownloadCanceled((e) => {
-        console.log('onDownloadCanceled', e);
+        console.log('[onDownloadCanceled]', e);
       }),
       BrightcoveDownloader.onDownloadDeleted((e) => {
-        console.log('onDownloadDeleted', e);
+        console.log('[onDownloadDeleted]', e);
       })
     );
 
@@ -110,13 +110,19 @@ export default function App() {
     BrightcoveDownloader.downloadVideo(videoIds[0] as string);
   };
   const pauseDownloadVideo = () => {
-    BrightcoveDownloader.pauseVideoDownload(videoIds[0] as string);
+    BrightcoveDownloader.pauseVideoDownload(videoIds[0] as string)
+      .then((res) => console.log('[pauseVideoDownload OK]', res))
+      .catch((e) => console.log('[pauseVideoDownload ERROR]', e));
   };
   const resumeDownloadVideo = () => {
-    BrightcoveDownloader.resumeVideoDownload(videoIds[0] as string);
+    BrightcoveDownloader.resumeVideoDownload(videoIds[0] as string)
+      .then((res) => console.log('[resumeVideoDownload OK]', res))
+      .catch((e) => console.log('[resumeVideoDownload ERROR]', e));
   };
   const deleteVideo = () => {
-    BrightcoveDownloader.deleteVideo(videoIds[0] as string);
+    BrightcoveDownloader.deleteVideo(videoIds[0] as string)
+      .then((res) => console.log('[deleteVideo OK]', res))
+      .catch((e) => console.log('[deleteVideo ERROR]', e));
   };
 
   return (
