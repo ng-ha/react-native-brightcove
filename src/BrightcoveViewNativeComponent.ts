@@ -26,7 +26,7 @@ interface NativeProps extends ViewProps {
   policyKey?: string | null;
   playerName?: string | null;
   videoId?: string | null;
-  referenceId?: string | null;
+  playlistReferenceId?: string | null;
   autoPlay?: boolean | null;
   play?: boolean | null;
   fullscreen?: boolean | null;

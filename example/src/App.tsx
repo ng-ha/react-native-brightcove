@@ -1,5 +1,11 @@
-import { useRef, useState } from 'react';
-import { View, StyleSheet, Button, ScrollView } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import {
+  View,
+  StyleSheet,
+  Button,
+  ScrollView,
+  type EventSubscription,
+} from 'react-native';
 import {
   BrightcoveDownloader,
   BrightcoveView,
@@ -9,13 +15,21 @@ import {
 // const accountId = '5434391461001';
 // const policyKey =
 //   'BCpkADawqM0T8lW3nMChuAbrcunBBHmh4YkNl5e6ZrKQwPiK_Y83RAOF4DP5tyBF_ONBVgrEjqW6fbV0nKRuHvjRU3E8jdT9WMTOXfJODoPML6NUDCYTwTHxtNlr5YdyGYaCPLhMUZ3Xu61L';
+// const videoId = '6140448705001';
 
 const accountId = '5420904993001';
 const policyKey =
   'BCpkADawqM1RJu5c_I13hBUAi4c8QNWO5QN2yrd_OgDjTCVsbILeGDxbYy6xhZESTFi68MiSUHzMbQbuLV3q-gvZkJFpym1qYbEwogOqKCXK622KNLPF92tX8AY9a1cVVYCgxSPN12pPAuIM';
 
-const videoId = '6140448705001';
-const referenceId = 'demo_odrm_widevine_dash';
+const playlistReferenceId = 'demo_odrm_widevine_dash';
+
+const videoIds = [
+  '5421538222001',
+  '5421543459001',
+  '5421546903001',
+  '5421531913001',
+  '5421538244001',
+];
 
 export default function App() {
   const [volume, setVolume] = useState<number | undefined>();
@@ -24,6 +38,43 @@ export default function App() {
     boolean | undefined
   >();
   const videoPlayer = useRef<React.ElementRef<typeof View> | null>(null);
+
+  useEffect(() => {
+    BrightcoveDownloader.initModule({ accountId, policyKey });
+    BrightcoveDownloader.getDownloadedVideos()
+      .then((res) => console.log('[downloaded video]', res))
+      .catch((e) => console.log('[get downloaded video error]', e));
+
+    const listeners: EventSubscription[] = [];
+    listeners.push(
+      BrightcoveDownloader.onDownloadRequested((e) => {
+        console.log('onDownloadRequested', e);
+      }),
+      BrightcoveDownloader.onDownloadStarted((e) => {
+        console.log('onDownloadStarted', e);
+      }),
+      BrightcoveDownloader.onDownloadProgress((e) => {
+        console.log('onDownloadProgress', e);
+      }),
+      BrightcoveDownloader.onDownloadPaused((e) => {
+        console.log('onDownloadPaused', e);
+      }),
+      BrightcoveDownloader.onDownloadCompleted((e) => {
+        console.log('onDownloadCompleted', e);
+      }),
+      BrightcoveDownloader.onDownloadFailed((e) => {
+        console.log('onDownloadFailed', e);
+      }),
+      BrightcoveDownloader.onDownloadCanceled((e) => {
+        console.log('onDownloadCanceled', e);
+      }),
+      BrightcoveDownloader.onDownloadDeleted((e) => {
+        console.log('onDownloadDeleted', e);
+      })
+    );
+
+    return () => listeners.forEach((listener) => listener.remove());
+  });
 
   const stopPlayback = () => {
     if (videoPlayer.current) {
@@ -55,6 +106,19 @@ export default function App() {
     }
   };
 
+  const downloadVideo = () => {
+    BrightcoveDownloader.downloadVideo(videoIds[0] as string);
+  };
+  const pauseDownloadVideo = () => {
+    BrightcoveDownloader.pauseVideoDownload(videoIds[0] as string);
+  };
+  const resumeDownloadVideo = () => {
+    BrightcoveDownloader.resumeVideoDownload(videoIds[0] as string);
+  };
+  const deleteVideo = () => {
+    BrightcoveDownloader.deleteVideo(videoIds[0] as string);
+  };
+
   return (
     <View style={styles.container}>
       <BrightcoveView
@@ -63,7 +127,7 @@ export default function App() {
         accountId={accountId}
         policyKey={policyKey}
         // videoId={videoId}
-        referenceId={referenceId}
+        playlistReferenceId={playlistReferenceId}
         playerName="ngthanhha"
         autoPlay
         fullscreen={fullscreen}
@@ -108,10 +172,10 @@ export default function App() {
           title={`Disable default control: ${disableDefaultControl}`}
           onPress={() => setDisableDefaultControl(!disableDefaultControl)}
         />
-        <Button
-          title="Download video"
-          onPress={() => BrightcoveDownloader.downloadVideo('id-testing')}
-        />
+        <Button title="Download video" onPress={downloadVideo} />
+        <Button title="Pause download video" onPress={pauseDownloadVideo} />
+        <Button title="Resume download video" onPress={resumeDownloadVideo} />
+        <Button title="Delete video" onPress={deleteVideo} />
       </ScrollView>
     </View>
   );
