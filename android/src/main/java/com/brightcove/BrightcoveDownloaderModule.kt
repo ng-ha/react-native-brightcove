@@ -106,7 +106,7 @@ class BrightcoveDownloaderModule(val reactContext: ReactApplicationContext) :
 
     catalog?.findVideoByID(id, httpRequestConfig, object : VideoListener() {
       override fun onVideo(video: Video?) {
-        if (video == null) return;
+        if (video == null) return
         catalog?.getMediaFormatTracksAvailable(video) { mediaDownloadable, bundle ->
           BrightcoveDownloadUtil.selectMediaFormatTracksAvailable(mediaDownloadable, bundle)
           catalog?.downloadVideo(video, object : OfflineCallback<DownloadStatus?> {
@@ -181,6 +181,8 @@ class BrightcoveDownloaderModule(val reactContext: ReactApplicationContext) :
 
   private val downloadEventListener = object : DownloadEventListener {
     override fun onDownloadRequested(video: Video) {
+      val payload = Arguments.createMap().apply { putString("id", video.id) }
+      emitOnDownloadRequested(payload)
       Log.d(tag, "Starting to process ${video.name} video download request")
     }
 
@@ -189,6 +191,11 @@ class BrightcoveDownloaderModule(val reactContext: ReactApplicationContext) :
       estimatedSize: Long,
       mediaProperties: Map<String, Serializable>,
     ) {
+      val payload = Arguments.createMap().apply {
+        putString("id", video.id)
+        putLong("estimatedSize", estimatedSize)
+      }
+      emitOnDownloadStarted(payload)
       Log.d(
         tag, String.format(
           "Started to download '%s' video. Estimated = %s, width = %s, height = %s, mimeType = %s",
@@ -202,6 +209,13 @@ class BrightcoveDownloaderModule(val reactContext: ReactApplicationContext) :
     }
 
     override fun onDownloadProgress(video: Video, status: DownloadStatus) {
+      val payload = Arguments.createMap().apply {
+        putString("id", video.id)
+        putLong("maxSize", status.maxSize)
+        putLong("bytesDownloaded", status.bytesDownloaded)
+        putDouble("progress", status.progress)
+      }
+      emitOnDownloadProgress(payload)
       Log.d(
         tag, String.format(
           "Downloaded %s out of %s of '%s' video. Progress %3.2f",
@@ -214,22 +228,38 @@ class BrightcoveDownloaderModule(val reactContext: ReactApplicationContext) :
     }
 
     override fun onDownloadPaused(video: Video, status: DownloadStatus) {
+      val payload = Arguments.createMap().apply {
+        putString("id", video.id)
+        putInt("reason", status.reason)
+      }
+      emitOnDownloadPaused(payload)
       Log.d(tag, "Paused download of '${video.name}' video: Reason #${status.reason}")
     }
 
     override fun onDownloadCompleted(video: Video, status: DownloadStatus) {
+      val payload = Arguments.createMap().apply { putString("id", video.id) }
+      emitOnDownloadCompleted(payload)
       Log.d(tag, "Successfully saved '${video.name}' video")
     }
 
     override fun onDownloadCanceled(video: Video) {
+      val payload = Arguments.createMap().apply { putString("id", video.id) }
+      emitOnDownloadCanceled(payload)
       Log.d(tag, "Cancelled download of '${video.name}' video removed")
     }
 
     override fun onDownloadDeleted(video: Video) {
+      val payload = Arguments.createMap().apply { putString("id", video.id) }
+      emitOnDownloadDeleted(payload)
       Log.d(tag, "Offline copy of '${video.name}' video removed")
     }
 
     override fun onDownloadFailed(video: Video, status: DownloadStatus) {
+      val payload = Arguments.createMap().apply {
+        putString("id", video.id)
+        putInt("reason", status.reason)
+      }
+      emitOnDownloadFailed(payload)
       Log.e(tag, "Failed to download '${video.name}' video: Error #${status.reason}")
     }
   }

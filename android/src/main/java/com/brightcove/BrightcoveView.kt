@@ -25,7 +25,6 @@ import com.brightcove.player.event.EventType
 import com.brightcove.player.mediacontroller.BrightcoveMediaController
 import com.brightcove.player.model.Playlist
 import com.brightcove.player.model.Video
-import com.brightcove.player.network.ConnectivityMonitor
 import com.brightcove.player.network.DownloadStatus
 import com.brightcove.player.network.HttpRequestConfig
 import com.brightcove.player.view.BrightcoveExoPlayerVideoView
@@ -56,8 +55,6 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
   private var playbackRate = 1f
   private var frameCounter = 0
   private var stopFrameCounter = false
-  private val connectivityMonitor: ConnectivityMonitor
-  private val connectivityListener = ConnectivityMonitor.Listener { _, _ -> loadVideo() }
   private val pasToken = "YOUR_PAS_TOKEN"
 
   constructor(context: Context?) : super(context)
@@ -70,7 +67,6 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
 
   init {
     (context as ThemedReactContext).addLifecycleEventListener(this)
-    connectivityMonitor = ConnectivityMonitor.getInstance(context)
     setBackgroundColor(Color.BLACK)
     addView(brightcoveVideoView)
     brightcoveVideoView.layoutParams =
@@ -301,7 +297,7 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
         isRoamingDownloadAllowed = false
       }
 
-    if (connectivityMonitor.isConnected && playlistReferenceId != null) {
+    if (playlistReferenceId != null) {
       val httpRequestConfig = HttpRequestConfig
         .Builder()
         .setBrightcoveAuthorizationToken(pasToken)
@@ -406,7 +402,6 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
     toggleInViewPort(true)
     stopFrameCounter = false
     setupLayout()
-    connectivityMonitor.addListener(connectivityListener)
     Log.d(tag, "onHostResume")
   }
 
@@ -414,7 +409,6 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
     pause()
     toggleInViewPort(false)
     stopFrameCounter = true
-    connectivityMonitor.removeListener(connectivityListener)
     Log.d(tag, "onHostPause")
   }
 
