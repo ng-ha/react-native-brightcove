@@ -20,7 +20,7 @@ import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReadableMap
 import java.io.Serializable
 
-class BrightcoveDownloaderModule(val reactContext: ReactApplicationContext) :
+class BrightcoveDownloader(val reactContext: ReactApplicationContext) :
   NativeBrightcoveDownloaderSpec(reactContext) {
   private val tag: String = "ng-ha:${this.javaClass.simpleName}"
   private var accountId: String? = null
@@ -265,6 +265,6 @@ class BrightcoveDownloaderModule(val reactContext: ReactApplicationContext) :
   }
 
   companion object {
-    const val NAME = "NativeBrightcoveDownloader"
+    const val NAME = "BrightcoveDownloader"
   }
 }

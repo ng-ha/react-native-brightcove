@@ -96,6 +96,4 @@ export interface Spec extends TurboModule {
   readonly onDownloadFailed: EventEmitter<TBrightcoveDownloadFailedEvent>;
 }
 
-export default TurboModuleRegistry.getEnforcing<Spec>(
-  'NativeBrightcoveDownloader'
-);
+export default TurboModuleRegistry.getEnforcing<Spec>('BrightcoveDownloader');
