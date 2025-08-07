@@ -150,15 +150,22 @@
     ]
   },
   "codegenConfig": {
-    "name": "BrightcoveViewSpec",
+    "name": "BrightcoveCodegenSpec",
     "type": "all",
     "jsSrcsDir": "src",
     "android": {
       "javaPackageName": "com.brightcove"
     },
     "ios": {
-      "componentProvider": {
-        "BrightcoveView": "BrightcoveView"
+      "components": {
+        "BrightcoveView": {
+          "className": "RCTBrightcoveView"
+        }
+      },
+      "modules": {
+        "BrightcoveDownloader": {
+          "className": "RCTBrightcoveDownloader"
+        }
       }
     }
   },
