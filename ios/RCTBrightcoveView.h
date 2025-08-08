@@ -6,7 +6,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface BrightcoveView : RCTViewComponentView
+@interface RCTBrightcoveView : RCTViewComponentView
 @end
 
 NS_ASSUME_NONNULL_END
