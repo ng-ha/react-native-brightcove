@@ -18,7 +18,7 @@ type TBrightcovePlayerEventDuration = {
 
 type TBrightcovePlayerEventBuffer = {
   target: Int32;
-  bufferProgress: Int32;
+  bufferProgress: Float;
 };
 
 interface NativeProps extends ViewProps {
