@@ -1,6 +1,7 @@
 #import "RCTBrightcoveView.h"
 
-#import <BrightcovePlayerSDK/BCOVPUIPlayerView.h>
+#import <BrightcovePlayerSDK/BrightcovePlayerSDK-Swift.h>
+#import <BrightcovePlayerSDK/BrightcovePlayerSDK.h>
 #import <react/renderer/components/BrightcoveCodegenSpec/ComponentDescriptors.h>
 #import <react/renderer/components/BrightcoveCodegenSpec/EventEmitters.h>
 #import <react/renderer/components/BrightcoveCodegenSpec/Props.h>
@@ -11,86 +12,240 @@
 
 using namespace facebook::react;
 
-@interface RCTBrightcoveView () <RCTBrightcoveViewViewProtocol, BCOVPUIPlayerViewDelegate>
+#ifdef DEBUG
+inline std::ostream &operator<<(std::ostream &os, const BrightcoveViewProps &p) {
+  os << "BrightcoveViewProps{";
+  os << "accountId:\"" << p.accountId << "\", ";
+  os << "policyKey:\"" << p.policyKey << "\", ";
+  os << "playerName:\"" << p.playerName << "\", ";
+  os << "videoId:\"" << p.videoId << "\", ";
+  os << "playlistReferenceId:\"" << p.playlistReferenceId << "\", ";
+  os << "autoPlay:" << p.autoPlay << ", ";
+  os << "play:" << p.play << ", ";
+  os << "fullscreen:" << p.fullscreen << ", ";
+  os << "disableDefaultControl:" << p.disableDefaultControl << ", ";
+  os << "volume:" << p.volume << ", ";
+  os << "playbackRate:" << p.playbackRate;
+  os << "}";
+  return os;
+}
+#endif
+
+// converting std::string → NSString
+static inline NSString *NSStringFromStdString(const std::string &s) {
+  if (s.empty()) {
+    return @"";
+  }
+  return [NSString stringWithUTF8String:s.c_str()];
+}
+
+@interface RCTBrightcoveView () <RCTBrightcoveViewViewProtocol,
+                                 RCTBrightcoveViewEventEmitterDelegate>
 
 @end
 
 @implementation RCTBrightcoveView {
-  //  UIView *_view;
-  RCTBrightcoveViewImpl *_brightcoveView;
+  RCTBrightcoveViewImpl *_view;
 }
-
-//- (instancetype)init {
-//  if (self = [super init]) {
-//    _brightcoveView = [[RCTBrightcoveViewImpl alloc] init];
-//    [self addSubview:_brightcoveView];
-//  }
-//  return self;
-//}
 
 - (instancetype)initWithFrame:(CGRect)frame {
   if (self = [super initWithFrame:frame]) {
     static const auto defaultProps = std::make_shared<const BrightcoveViewProps>();
     _props = defaultProps;
-    _brightcoveView = [[RCTBrightcoveViewImpl alloc] init];
-    //    _brightcoveView.delegate = self;
-    self.contentView = _brightcoveView;
+    _view = [[RCTBrightcoveViewImpl alloc] init];
+    _view.eventEmitterDelegate = self;
+    self.contentView = _view;
   }
   return self;
 }
 
 - (void)dealloc {
-  if (_brightcoveView) {
-    //    _brightcoveView.delegate = nil;
-    _brightcoveView = nil;
+  if (_view) {
+    _view.eventEmitterDelegate = nil;
+    _view = nil;
   }
 }
 
-//  You can listen to this lifecycle event to pause / resume operations as Fabric components are
-//  kept in memory to be reused later
-//- (void)didMoveToSuperview {
-//  if (self.superview != nil) {
-//    // Manually triggering events that child third-party views/controllers listen to resume
-//    // operations
-//    [_brightcoveView triggerViewWillAppear];
-//  }
-//}
-
 - (void)layoutSubviews {
   [super layoutSubviews];
-  _brightcoveView.frame = self.bounds;
+  _view.frame = self.bounds;
 }
+
+#pragma mark - Update props
 
 - (void)updateProps:(Props::Shared const &)props oldProps:(Props::Shared const &)oldProps {
   const auto &oldViewProps = *std::static_pointer_cast<BrightcoveViewProps const>(_props);
   const auto &newViewProps = *std::static_pointer_cast<BrightcoveViewProps const>(props);
 
-  //  if (oldViewProps.color != newViewProps.color) {
-  //    NSString *colorToConvert = [[NSString alloc] initWithUTF8String:newViewProps.color.c_str()];
-  //    [_view setBackgroundColor:[self hexStringToColor:colorToConvert]];
-  //  }
+  // log props
+#if DEBUG
+  std::ostringstream oss;
+  oss << oldViewProps << " -> " << newViewProps;
+  NSString *log = NSStringFromStdString(oss.str());
+  NSLog(@"updateProps: %@", log);
+#endif
+
+  // accountId
+  if (oldViewProps.accountId != newViewProps.accountId) {
+    NSString *accountId = NSStringFromStdString(newViewProps.accountId);
+    [_view setAccountId:accountId];
+  }
+
+  // policyKey
+  if (oldViewProps.policyKey != newViewProps.policyKey) {
+    NSString *policyKey = NSStringFromStdString(newViewProps.policyKey);
+    [_view setPolicyKey:policyKey];
+  }
+
+  // videoId
+  if (oldViewProps.videoId != newViewProps.videoId) {
+    NSString *videoId = NSStringFromStdString(newViewProps.videoId);
+    [_view setVideoId:videoId];
+  }
+
+  // playerName
+  if (oldViewProps.playerName != newViewProps.playerName) {
+    NSString *playerName = NSStringFromStdString(newViewProps.playerName);
+    [_view setPlayerName:playerName];
+  }
+
+  // autoPlay
+  if (oldViewProps.autoPlay != newViewProps.autoPlay) {
+    [_view setAutoPlay:newViewProps.autoPlay];
+  }
+
+  // play
+  if (oldViewProps.play != newViewProps.play) {
+    [_view setPlay:newViewProps.play];
+  }
+
+  // fullscreen
+  if (oldViewProps.fullscreen != newViewProps.fullscreen) {
+    [_view setFullscreen:newViewProps.fullscreen];
+  }
+
+  // volume
+  if (oldViewProps.volume != newViewProps.volume) {
+    [_view setVolume:newViewProps.volume];
+  }
+
+  // playbackRate
+  if (oldViewProps.playbackRate != newViewProps.playbackRate) {
+    [_view setPlaybackRate:newViewProps.playbackRate];
+  }
+
+  // disableDefaultControl
+  if (oldViewProps.disableDefaultControl != newViewProps.disableDefaultControl) {
+    [_view setDisableDefaultControl:newViewProps.disableDefaultControl];
+  }
 
   [super updateProps:props oldProps:oldProps];
 }
 
-//Class<RCTComponentViewProtocol> RCTBrightcoveViewCls(void) { return RCTBrightcoveView.class; }
+#pragma mark - Player Actions
 
 - (void)pause {
+  [_view pause];
 }
 
 - (void)play {
+  [_view play];
 }
 
 - (void)seekTo:(NSInteger)seconds {
+  [_view seekTo:(float)seconds
+      completionHandler:^(BOOL finished){
+      }];
 }
 
 - (void)stopPlayback {
+  [_view stopPlayback];
 }
 
 - (void)toggleFullscreen:(BOOL)isFullscreen {
+  [_view setFullscreen:isFullscreen];
 }
 
 - (void)toggleInViewPort:(BOOL)inViewPort {
+  [_view toggleInViewPort:inViewPort];
+}
+
+#pragma mark - Handle events
+
+- (void)emitEvent:(NSString *_Nonnull)name
+      withPayload:(NSDictionary<NSString *, id> *_Nullable)payload {
+  if ([name isEqualToString:@"onReady"]) {
+    BrightcoveViewEventEmitter::OnReady eventStruct;
+    self.eventEmitter.onReady(eventStruct);
+    return;
+  }
+
+  if ([name isEqualToString:@"onPlay"]) {
+    BrightcoveViewEventEmitter::OnPlay eventStruct;
+    self.eventEmitter.onPlay(eventStruct);
+    return;
+  }
+
+  if ([name isEqualToString:@"onPause"]) {
+    BrightcoveViewEventEmitter::OnPause eventStruct;
+    self.eventEmitter.onPause(eventStruct);
+    return;
+  }
+
+  if ([name isEqualToString:@"onEnd"]) {
+    BrightcoveViewEventEmitter::OnEnd eventStruct;
+    self.eventEmitter.onEnd(eventStruct);
+    return;
+  }
+
+  if ([name isEqualToString:@"onProgress"]) {
+    BrightcoveViewEventEmitter::OnProgress eventStruct;
+    id val = payload[@"currentTime"];
+    int currentTime = 0;
+    if (val && val != (id)kCFNull && [val respondsToSelector:@selector(intValue)]) {
+      currentTime = [val intValue];
+    }
+    eventStruct.currentTime = currentTime;
+    self.eventEmitter.onProgress(eventStruct);
+    return;
+  }
+
+  if ([name isEqualToString:@"onUpdateBufferProgress"]) {
+    BrightcoveViewEventEmitter::OnUpdateBufferProgress eventStruct;
+    id val = payload[@"bufferProgress"];
+    float bufferProgress = 0;
+    if (val && val != (id)kCFNull && [val respondsToSelector:@selector(floatValue)]) {
+      bufferProgress = [val floatValue];
+    }
+    eventStruct.bufferProgress = bufferProgress;
+    self.eventEmitter.onUpdateBufferProgress(eventStruct);
+    return;
+  }
+
+  if ([name isEqualToString:@"onChangeDuration"]) {
+    BrightcoveViewEventEmitter::OnChangeDuration eventStruct;
+    id val = payload[@"duration"];
+    int duration = 0;
+    if (val && val != (id)kCFNull && [val respondsToSelector:@selector(intValue)]) {
+      duration = [val intValue];
+    }
+    eventStruct.duration = duration;
+    self.eventEmitter.onChangeDuration(eventStruct);
+    return;
+    return;
+  }
+
+  if ([name isEqualToString:@"onEnterFullscreen"]) {
+    BrightcoveViewEventEmitter::OnEnterFullscreen eventStruct;
+    self.eventEmitter.onEnterFullscreen(eventStruct);
+    return;
+  }
+
+  if ([name isEqualToString:@"onExitFullscreen"]) {
+    BrightcoveViewEventEmitter::OnExitFullscreen eventStruct;
+    self.eventEmitter.onExitFullscreen(eventStruct);
+    return;
+  }
 }
 
 // Event emitter convenience method
@@ -102,6 +257,9 @@ using namespace facebook::react;
 - (void)handleCommand:(const NSString *)commandName args:(const NSArray *)args {
   RCTBrightcoveViewHandleCommand(self, commandName, args);
 }
+
+// for Fabric component, use componentDescriptorProvider instead
+// Class<RCTComponentViewProtocol> RCTBrightcoveViewCls(void) { return RCTBrightcoveView.class; }
 
 + (ComponentDescriptorProvider)componentDescriptorProvider {
   return concreteComponentDescriptorProvider<BrightcoveViewComponentDescriptor>();
