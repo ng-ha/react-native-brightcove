@@ -1,6 +1,7 @@
 #import "RCTBrightcoveView.h"
 
 #import <BrightcovePlayerSDK/BrightcovePlayerSDK.h>
+#import <BrightcovePlayerSDK/BrightcovePlayerSDK-Swift.h>
 #import <react/renderer/components/BrightcoveCodegenSpec/ComponentDescriptors.h>
 #import <react/renderer/components/BrightcoveCodegenSpec/EventEmitters.h>
 #import <react/renderer/components/BrightcoveCodegenSpec/Props.h>
