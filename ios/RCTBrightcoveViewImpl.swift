@@ -6,7 +6,7 @@
 import BrightcovePlayerSDK
 import UIKit
 
-@objc public protocol RCTEventEmitterDelegate {
+@objc public protocol RCTBrightcoveViewEventEmitterDelegate {
   @objc func emitEvent(_ name: String, withPayload payload: [String: Any]?)
 }
 
@@ -25,21 +25,20 @@ import UIKit
   private var inViewPort = true
   private var isAppInForeground = true
   private var playbackServiceDirty = false
-  private let sharedSDKManager = BCOVPlayerSDKManager.sharedManager()
   private let playbackController: BCOVPlaybackController
   private var playbackService: BCOVPlaybackService?
   private var playbackSession: BCOVPlaybackSession?
   private var playerView: BCOVPUIPlayerView?
-  @objc public weak var eventEmitterDelegate: RCTEventEmitterDelegate?
+  @objc public weak var eventEmitterDelegate: RCTBrightcoveViewEventEmitterDelegate?
 
   @objc override init(frame: CGRect) {
-    playbackController = sharedSDKManager.createPlaybackController()
+    playbackController = BCOVPlayerSDKManager.sharedManager().createPlaybackController()
     super.init(frame: frame)
     setup()
   }
 
   @objc required init?(coder: NSCoder) {
-    playbackController = sharedSDKManager.createPlaybackController()
+    playbackController = BCOVPlayerSDKManager.sharedManager().createPlaybackController()
     super.init(coder: coder)
     setup()
   }
@@ -96,10 +95,8 @@ import UIKit
 
     let configuration = [BCOVPlaybackService.ConfigurationKeyAssetID: videoId]
 
-    playbackService.findVideo(
-      withConfiguration: configuration,
-      queryParameters: nil
-    ) { [weak self] (video: BCOVVideo?, jsonResponse: Any?, error: Error?) in
+    playbackService.findVideo(withConfiguration: configuration, queryParameters: nil) {
+      [weak self] (video: BCOVVideo?, jsonResponse: Any?, error: Error?) in
       if let video {
         self?.playbackController.setVideos([video])
       } else {
@@ -287,7 +284,7 @@ extension RCTBrightcoveViewImpl: BCOVPlaybackControllerDelegate {
     playbackSession session: (any BCOVPlaybackSession)!,
     didReceive lifecycleEvent: BCOVPlaybackSessionLifecycleEvent!
   ) {
-    var eventType = lifecycleEvent.eventType
+    let eventType = lifecycleEvent.eventType
     print("playbackController didReceive lifecycleEvent: \(eventType)")
 
     if eventType == kBCOVPlaybackSessionLifecycleEventPlaybackBufferEmpty

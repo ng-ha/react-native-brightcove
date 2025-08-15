@@ -38,7 +38,7 @@ static inline NSString *NSStringFromStdString(const std::string &s) {
   return [NSString stringWithUTF8String:s.c_str()];
 }
 
-@interface RCTBrightcoveView () <RCTBrightcoveViewViewProtocol, RCTEventEmitterDelegate>
+@interface RCTBrightcoveView () <RCTBrightcoveViewViewProtocol, RCTBrightcoveViewEventEmitterDelegate>
 
 @end
 
