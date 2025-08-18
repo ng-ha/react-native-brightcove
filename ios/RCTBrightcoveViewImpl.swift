@@ -91,18 +91,27 @@ import UIKit
   }
 
   private func loadVideo() {
-    guard let playbackService, let videoId, !videoId.isEmpty else { return }
+    guard let videoId, !videoId.isEmpty, let offlineManager = BCOVOfflineVideoManager.sharedManager
+    else { return }
 
-    let configuration = [BCOVPlaybackService.ConfigurationKeyAssetID: videoId]
-
-    playbackService.findVideo(withConfiguration: configuration, queryParameters: nil) {
-      [weak self] (video: BCOVVideo?, jsonResponse: Any?, error: Error?) in
-      if let video {
-        self?.playbackController.setVideos([video])
-      } else {
-        print("Error retrieving video: \(error?.localizedDescription ?? "unknown error")")
+    for token in offlineManager.offlineVideoTokens {
+      guard let offlineVideo = offlineManager.videoObject(fromOfflineVideoToken: token)
+      else { continue }
+      if offlineVideo.videoId == videoId {
+        playbackController.setVideos([offlineVideo])
+        return
       }
     }
+
+    //    let configuration = [BCOVPlaybackService.ConfigurationKeyAssetID: videoId]
+    //    playbackService.findVideo(withConfiguration: configuration, queryParameters: nil) {
+    //      [weak self] (video: BCOVVideo?, jsonResponse: Any?, error: Error?) in
+    //      if let video {
+    //        self?.playbackController.setVideos([video])
+    //      } else {
+    //        print("Error retrieving video: \(error?.localizedDescription ?? "unknown error")")
+    //      }
+    //    }
   }
 
   // MARK: - Set props
