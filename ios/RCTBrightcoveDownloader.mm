@@ -59,6 +59,12 @@
   [downloader resumeVideoDownloadWithVideoId:id resolve:resolve reject:reject];
 }
 
+- (void)cancelVideoDownload:(nonnull NSString *)id
+                    resolve:(nonnull RCTPromiseResolveBlock)resolve
+                     reject:(nonnull RCTPromiseRejectBlock)reject {
+  [downloader cancelVideoDownloadWithVideoId:id resolve:resolve reject:reject];
+}
+
 - (void)deleteVideo:(nonnull NSString *)id
             resolve:(nonnull RCTPromiseResolveBlock)resolve
              reject:(nonnull RCTPromiseRejectBlock)reject {

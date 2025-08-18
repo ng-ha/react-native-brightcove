@@ -129,8 +129,7 @@ class BrightcoveDownloader(val reactContext: ReactApplicationContext) :
 
     catalog?.pauseVideoDownload(id, object : OfflineCallback<Int?> {
       override fun onSuccess(status: Int?) {
-        val payload = Arguments.createMap().apply { if (status != null) putInt("status", status) }
-        promise?.resolve(payload)
+        promise?.resolve(true)
       }
 
       override fun onFailure(throwable: Throwable) {
@@ -148,13 +147,30 @@ class BrightcoveDownloader(val reactContext: ReactApplicationContext) :
 
     catalog?.resumeVideoDownload(id, object : OfflineCallback<Int?> {
       override fun onSuccess(status: Int?) {
-        val payload = Arguments.createMap().apply { if (status != null) putInt("status", status) }
-        promise?.resolve(payload)
+        promise?.resolve(true)
       }
 
       override fun onFailure(throwable: Throwable) {
         promise?.reject("4", "Error resuming video download", throwable)
         Log.e(tag, "Error resuming video download: ", throwable)
+      }
+    })
+  }
+
+  override fun cancelVideoDownload(id: String?, promise: Promise?) {
+    if (id == null || catalog == null) {
+      promise?.reject("1", "ID or catalog is null")
+      return
+    }
+
+    catalog?.cancelVideoDownload(id, object : OfflineCallback<Boolean?> {
+      override fun onSuccess(status: Boolean?) {
+        promise?.resolve(true)
+      }
+
+      override fun onFailure(throwable: Throwable) {
+        promise?.reject("4", "Error canceling video download", throwable)
+        Log.e(tag, "Error canceling video download: ", throwable)
       }
     })
   }
@@ -167,9 +183,7 @@ class BrightcoveDownloader(val reactContext: ReactApplicationContext) :
 
     catalog?.deleteVideo(id, object : OfflineCallback<Boolean?> {
       override fun onSuccess(result: Boolean?) {
-        val payload =
-          Arguments.createMap().apply { if (result != null) putBoolean("result", result) }
-        promise?.resolve(payload)
+        promise?.resolve(true)
       }
 
       override fun onFailure(throwable: Throwable) {

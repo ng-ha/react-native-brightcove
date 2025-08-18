@@ -290,6 +290,21 @@ import React
     reject("ERR_NOT_SUSPENDED", "Video is not currently suspended", nil)
   }
 
+  @objc public func cancelVideoDownload(
+    withVideoId videoId: String?,
+    resolve: RCTPromiseResolveBlock,
+    reject: RCTPromiseRejectBlock
+  ) {
+    guard let token = getVideoOfflineToken(fromVideoId: videoId),
+      let offlineManager = BCOVOfflineVideoManager.sharedManager
+    else {
+      reject("ERR_NO_STATUS", "Token or manager is nil", nil)
+      return
+    }
+    offlineManager.cancelVideoDownload(token)
+    resolve(true)
+  }
+
   @objc public func deleteVideo(
     withVideoId videoId: String?,
     resolve: RCTPromiseResolveBlock,

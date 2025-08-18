@@ -74,7 +74,7 @@ export default function App() {
     );
 
     return () => listeners.forEach((listener) => listener.remove());
-  });
+  }, []);
 
   const stopPlayback = () => {
     if (videoPlayer.current) {
@@ -118,6 +118,11 @@ export default function App() {
     BrightcoveDownloader.resumeVideoDownload(videoIds[0] as string)
       .then((res) => console.log('[resumeVideoDownload OK]', res))
       .catch((e) => console.log('[resumeVideoDownload ERROR]', e));
+  };
+  const cancelDownloadVideo = () => {
+    BrightcoveDownloader.cancelVideoDownload(videoIds[0] as string)
+      .then((res) => console.log('[cancelVideoDownload OK]', res))
+      .catch((e) => console.log('[cancelVideoDownload ERROR]', e));
   };
   const deleteVideo = () => {
     BrightcoveDownloader.deleteVideo(videoIds[0] as string)
@@ -180,6 +185,7 @@ export default function App() {
         <Button title="Download video" onPress={downloadVideo} />
         <Button title="Pause download video" onPress={pauseDownloadVideo} />
         <Button title="Resume download video" onPress={resumeDownloadVideo} />
+        <Button title="Cancel download video" onPress={cancelDownloadVideo} />
         <Button title="Delete video" onPress={deleteVideo} />
       </ScrollView>
     </View>
