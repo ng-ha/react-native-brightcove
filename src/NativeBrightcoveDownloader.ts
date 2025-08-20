@@ -20,7 +20,7 @@ export type TBrightcoveDownloadedVideo = {
   duration?: Int32 | null;
   thumbnailUri?: string | null;
   posterUri?: string | null;
-  licenseExpiryDate?: string | null;
+  licenseExpiryDate?: Int32 | null;
   size?: Int32 | null;
 };
 
