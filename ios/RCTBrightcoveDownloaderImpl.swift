@@ -76,6 +76,9 @@ import React
     for token in tokens {
       guard let video = offlineManager.videoObject(fromOfflineVideoToken: token)
       else { continue }
+      
+      let status = offlineManager.offlineVideoStatus(forToken: token)
+
       let videoDict: [String: Any] = [
         "id": video.videoId ?? "",
         "referenceId": video.referenceId ?? "",
@@ -83,11 +86,13 @@ import React
         "shortDescription": video.shortDescription ?? "",
         "longDescription": video.longDescription ?? "",
         "duration": video.duration ?? 0,
-        "thumbnailUri": video.thumbnail ?? "",
-        "posterUri": video.poster ?? "",
+        "thumbnailUri": video.offlineThumbnail ?? "",
+        "posterUri": video.offlinePoster ?? "",
         "licenseExpiryDate": video.licenseExpirationTime,
         "size": video.size,
+        "status": status?.downloadState.rawValue ?? -1
       ]
+      print("videoDict \(videoDict)")
       result.append(videoDict)
     }
     resolve(result)
@@ -248,6 +253,12 @@ import React
       self?.eventEmitterDelegate?.emitOnDownloadStarted([
         "id": video.videoId ?? "",
         "estimatedSize": size,
+        "name": video.name ?? "",
+        "shortDescription": video.shortDescription ?? "",
+        "longDescription": video.longDescription ?? "",
+        "duration": video.duration ?? 0,
+        "thumbnailUri": video.onlineThumbnail ?? "",
+        "posterUri": video.onlinePoster ?? "",
       ])
     }
   }
@@ -267,6 +278,7 @@ import React
     if status.downloadState == .downloading {
       offlineManager.pauseVideoDownload(token)
       resolve(true)
+      return
     }
     reject("ERR_NOT_DOWNLOADING", "Video is not currently downloading", nil)
   }
@@ -286,6 +298,7 @@ import React
     if status.downloadState == .suspended {
       offlineManager.resumeVideoDownload(token)
       resolve(true)
+      return
     }
     reject("ERR_NOT_SUSPENDED", "Video is not currently suspended", nil)
   }
@@ -317,8 +330,7 @@ import React
       return
     }
     offlineManager.deleteOfflineVideo(token)
-    let videoId = getVideoId(fromVideoOfflineToken: token) ?? ""
-    eventEmitterDelegate?.emitOnDownloadDeleted(["id": videoId])
+    eventEmitterDelegate?.emitOnDownloadDeleted(["id": videoId ?? ""])
     resolve(true)
   }
 }

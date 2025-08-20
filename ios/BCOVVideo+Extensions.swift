@@ -38,14 +38,20 @@ extension BCOVVideo {
     return properties[BCOVVideo.PropertyKeyDuration] as? NSNumber
   }
 
-  var thumbnail: String? {
-    //    return properties[BCOVVideo.PropertyKeyThumbnail] as? String
+  var offlineThumbnail: String? {
     return properties[BCOVOfflineVideo.ThumbnailFilePathPropertyKey] as? String
   }
 
-  var poster: String? {
-    //    return properties[BCOVVideo.PropertyKeyPoster] as? String
+  var offlinePoster: String? {
     return properties[BCOVOfflineVideo.PosterFilePathPropertyKey] as? String
+  }
+
+  var onlineThumbnail: String? {
+    return properties[BCOVVideo.PropertyKeyThumbnail] as? String
+  }
+
+  var onlinePoster: String? {
+    return properties[BCOVVideo.PropertyKeyPoster] as? String
   }
 
   var licenseExpirationTime: Double {

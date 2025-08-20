@@ -22,6 +22,7 @@ export type TBrightcoveDownloadedVideo = {
   posterUri?: string | null;
   licenseExpiryDate?: Int32 | null;
   size?: Int32 | null;
+  status?: Int32;
 };
 
 // Download result
@@ -43,6 +44,12 @@ export type TBrightcoveDownloadRequestedEvent = {
 export type TBrightcoveDownloadStartedEvent = {
   id: string;
   estimatedSize: Int32;
+  name?: string;
+  shortDescription?: string;
+  longDescription?: string;
+  duration?: Int32;
+  thumbnailUri?: string;
+  posterUri?: string;
 };
 
 export type TBrightcoveDownloadProgressEvent = {
