@@ -38,9 +38,21 @@
   [downloader deinitModule];
 }
 
-- (void)getDownloadedVideos:(nonnull RCTPromiseResolveBlock)resolve
-                     reject:(nonnull RCTPromiseRejectBlock)reject {
-  [downloader getDownloadedVideosWithResolve:resolve reject:reject];
+- (void)getAllDownloadedVideos:(nonnull RCTPromiseResolveBlock)resolve
+                        reject:(nonnull RCTPromiseRejectBlock)reject {
+  [downloader getAllDownloadedVideosWithResolve:resolve reject:reject];
+}
+
+- (void)getDownloadedVideoById:(nonnull NSString *)id
+                       resolve:(nonnull RCTPromiseResolveBlock)resolve
+                        reject:(nonnull RCTPromiseRejectBlock)reject {
+  [downloader getDownloadedVideoById:id resolve:resolve reject:reject];
+}
+
+- (void)estimateDownloadSize:(nonnull NSString *)id
+                     resolve:(nonnull RCTPromiseResolveBlock)resolve
+                      reject:(nonnull RCTPromiseRejectBlock)reject {
+  [downloader estimateDownloadSizeWithVideoId:id resolve:resolve reject:reject];
 }
 
 - (void)downloadVideo:(nonnull NSString *)id {

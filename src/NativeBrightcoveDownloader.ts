@@ -17,15 +17,23 @@ export type TBrightcoveDownloadedVideo = {
   name?: string | null;
   shortDescription?: string | null;
   longDescription?: string | null;
-  duration?: Int32 | null;
+  /**
+   * In milliseconds.
+   */
+  duration?: Double | null;
   thumbnailUri?: string | null;
   posterUri?: string | null;
-  licenseExpiryDate?: Int32 | null;
-  size?: Int32 | null;
+  licenseExpiryDate?: Double | null;
+  /**
+   * In bytes.
+   */
+  size?: Double | null;
   status?: Int32;
 };
 
 // Download result
+
+export type TBrightcoveDownloadSize = Double;
 
 export type TBrightcovePauseDownloadResult = boolean;
 
@@ -43,20 +51,36 @@ export type TBrightcoveDownloadRequestedEvent = {
 
 export type TBrightcoveDownloadStartedEvent = {
   id: string;
-  estimatedSize: Int32;
+  /**
+   * In bytes. Android only
+   */
+  size?: Double;
+  referenceId?: string;
   name?: string;
   shortDescription?: string;
   longDescription?: string;
-  duration?: Int32;
+  /**
+   * In milliseconds.
+   */
+  duration?: Double;
   thumbnailUri?: string;
   posterUri?: string;
 };
 
 export type TBrightcoveDownloadProgressEvent = {
   id: string;
-  maxSize: Int32;
-  bytesDownloaded: Int32;
+  /**
+   * A value between 0 and 100
+   */
   progress: Double;
+  /**
+   * In bytes. Android only
+   */
+  bytesDownloaded: Double;
+  /**
+   * In bytes. Android only
+   */
+  maxSize?: Double;
 };
 
 export type TBrightcoveDownloadPausedEvent = {
@@ -84,7 +108,9 @@ export type TBrightcoveDownloadFailedEvent = {
 export interface Spec extends TurboModule {
   initModule(config: TBrightcoveDownloadConfig): void;
   deinitModule(): void;
-  getDownloadedVideos(): Promise<TBrightcoveDownloadedVideo[]>;
+  getAllDownloadedVideos(): Promise<TBrightcoveDownloadedVideo[]>;
+  getDownloadedVideoById(id: string): Promise<TBrightcoveDownloadedVideo>;
+  estimateDownloadSize(id: string): Promise<TBrightcoveDownloadSize>;
   downloadVideo(id: string): void;
   pauseVideoDownload(id: string): Promise<TBrightcovePauseDownloadResult>;
   resumeVideoDownload(id: string): Promise<TBrightcoveResumeDownloadResult>;

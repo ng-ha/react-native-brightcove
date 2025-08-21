@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  StyleSheet,
+  Alert,
   Button,
   ScrollView,
+  StyleSheet,
+  View,
   type EventSubscription,
 } from 'react-native';
 import {
@@ -55,9 +56,6 @@ export default function App() {
 
   useEffect(() => {
     BrightcoveDownloader.initModule({ accountId, policyKey });
-    BrightcoveDownloader.getDownloadedVideos()
-      .then((res) => console.log('[getDownloadedVideos OK]', res))
-      .catch((e) => console.log('[getDownloadedVideos ERROR]', e));
 
     const listeners: EventSubscription[] = [];
     listeners.push(
@@ -120,6 +118,30 @@ export default function App() {
     }
   };
 
+  const getAllDownloadedVideos = () => {
+    BrightcoveDownloader.getAllDownloadedVideos()
+      .then((res) => {
+        console.log('[getDownloadedVideos OK]', res);
+        Alert.alert('All downloaded videos', JSON.stringify(res));
+      })
+      .catch((e) => console.log('[getDownloadedVideos ERROR]', e));
+  };
+  const getDownloadedVideosById = () => {
+    BrightcoveDownloader.getDownloadedVideoById(videoIds[0] as string)
+      .then((res) => {
+        console.log('[getDownloadedVideoById OK]', res);
+        Alert.alert(`Downloaded video ${videoIds[0]}`, JSON.stringify(res));
+      })
+      .catch((e) => console.log('[getDownloadedVideoById ERROR]', e));
+  };
+  const estimateDownloadSize = () => {
+    BrightcoveDownloader.estimateDownloadSize(videoIds[0] as string)
+      .then((size) => {
+        console.log('[estimateDownloadSize OK]', size);
+        Alert.alert(`Estimate download size ${videoIds[0]}`, `${size} bytes`);
+      })
+      .catch((e) => console.log('[estimateDownloadSize ERROR]', e));
+  };
   const downloadVideo = () => {
     BrightcoveDownloader.downloadVideo(videoIds[0] as string);
   };
@@ -196,6 +218,15 @@ export default function App() {
           title={`Disable default control: ${disableDefaultControl}`}
           onPress={() => setDisableDefaultControl(!disableDefaultControl)}
         />
+        <Button
+          title="Get all downloaded videos"
+          onPress={getAllDownloadedVideos}
+        />
+        <Button
+          title="Get download video by id"
+          onPress={getDownloadedVideosById}
+        />
+        <Button title="Estimate download size" onPress={estimateDownloadSize} />
         <Button title="Download video" onPress={downloadVideo} />
         <Button title="Pause download video" onPress={pauseDownloadVideo} />
         <Button title="Resume download video" onPress={resumeDownloadVideo} />

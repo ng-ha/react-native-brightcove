@@ -58,42 +58,76 @@ class BrightcoveDownloader(val reactContext: ReactApplicationContext) :
     catalog?.removeDownloadEventListener(downloadEventListener)
   }
 
-  override fun getDownloadedVideos(promise: Promise?) {
+  override fun getAllDownloadedVideos(promise: Promise?) {
     if (catalog == null) {
       promise?.reject("1", "Catalog is null")
       return
     }
 
-    catalog?.findAllVideoDownload(
-      DownloadStatus.STATUS_COMPLETE,
-      object : OfflineCallback<List<Video?>?> {
-        override fun onSuccess(videos: List<Video?>?) {
-          val result = Arguments.createArray()
-          videos?.forEach { video ->
-            if (video == null) return@forEach
-            val videoInfo = Arguments.createMap().apply {
-              putString("id", video.id)
-              putString("referenceId", video.referenceId)
-              putString("name", video.name)
-              putLong("duration", video.durationLong)
-              putString("shortDescription", video.description)
-              video.longDescription?.let { putString("longDescription", it) }
-              video.thumbnail?.let { putString("thumbnailUri", it.toString()) }
-              video.posterImage?.let { putString("posterUri", it.toString()) }
-              video.licenseExpiryDate?.let { putString("licenseExpiryDate", it.toString()) }
-              catalog?.estimateSize(video)?.let { putLong("size", it) }
-            }
-            result.pushMap(videoInfo)
-          }
-          Log.d(tag, "downloaded videos: $result")
-          promise?.resolve(result)
+    catalog?.findAllQueuedVideoDownload(object : OfflineCallback<List<Video?>?> {
+      override fun onSuccess(videos: List<Video?>?) {
+        val result = Arguments.createArray()
+        videos?.forEach { video ->
+          if (video == null) return@forEach
+          val videoInfo = createVideoMap(video)
+          result.pushMap(videoInfo)
+        }
+        Log.d(tag, "downloaded videos: $result")
+        promise?.resolve(result)
+      }
+
+      override fun onFailure(throwable: Throwable) {
+        Log.e(tag, "Error fetching downloaded videos: ", throwable)
+        promise?.reject("2", "Error fetching downloaded videos", throwable)
+      }
+    })
+  }
+
+  override fun getDownloadedVideoById(id: String?, promise: Promise?) {
+    if (id == null || catalog == null) {
+      promise?.reject("1", "ID or catalog is null")
+      return
+    }
+
+    catalog?.findOfflineVideoById(id, object : OfflineCallback<Video?> {
+      override fun onSuccess(video: Video?) {
+        if (video == null) {
+          promise?.reject("6", "Video is null")
+          return
         }
 
-        override fun onFailure(throwable: Throwable) {
-          Log.e(tag, "Error fetching downloaded videos: ", throwable)
-          promise?.reject("2", "Error fetching downloaded videos", throwable)
+        val videoInfo = createVideoMap(video)
+        Log.d(tag, "downloaded video: $videoInfo")
+        promise?.resolve(videoInfo)
+      }
+
+      override fun onFailure(throwable: Throwable?) {
+        Log.e(tag, "Error fetching downloaded video: ", throwable)
+        promise?.reject("2", "Error fetching downloaded video", throwable)
+      }
+    })
+  }
+
+  override fun estimateDownloadSize(id: String?, promise: Promise?) {
+    if (id == null || catalog == null) {
+      promise?.reject("1", "ID or catalog is null")
+      return
+    }
+
+    val httpRequestConfig = HttpRequestConfig
+      .Builder()
+      .setBrightcoveAuthorizationToken(pasToken)
+      .build()
+
+    catalog?.findVideoByID(id, httpRequestConfig, object : VideoListener() {
+      override fun onVideo(video: Video?) {
+        if (video == null) {
+          promise?.reject("6", "video is null")
+          return
         }
-      })
+        catalog?.estimateSize(video) { promise?.resolve(it.toDouble()) }
+      }
+    })
   }
 
   override fun downloadVideo(id: String?) {
@@ -207,7 +241,14 @@ class BrightcoveDownloader(val reactContext: ReactApplicationContext) :
     ) {
       val payload = Arguments.createMap().apply {
         putString("id", video.id)
-        putLong("estimatedSize", estimatedSize)
+        putLong("size", estimatedSize)
+        putString("referenceId", video.referenceId)
+        putString("name", video.name)
+        putLong("duration", video.durationLong)
+        putString("shortDescription", video.description)
+        video.longDescription?.let { putString("longDescription", it) }
+        video.thumbnail?.let { putString("thumbnailUri", it.toString()) }
+        video.posterImage?.let { putString("posterUri", it.toString()) }
       }
       emitOnDownloadStarted(payload)
       Log.d(
@@ -275,6 +316,22 @@ class BrightcoveDownloader(val reactContext: ReactApplicationContext) :
       }
       emitOnDownloadFailed(payload)
       Log.e(tag, "Failed to download '${video.name}' video: Error #${status.reason}")
+    }
+  }
+
+  private fun createVideoMap(video: Video): ReadableMap {
+    return Arguments.createMap().apply {
+      putString("id", video.id)
+      putString("referenceId", video.referenceId)
+      putString("name", video.name)
+      putLong("duration", video.durationLong)
+      putString("shortDescription", video.description)
+      video.longDescription?.let { putString("longDescription", it) }
+      video.thumbnail?.let { putString("thumbnailUri", it.toString()) }
+      video.posterImage?.let { putString("posterUri", it.toString()) }
+      video.licenseExpiryDate?.let { putLong("licenseExpiryDate", it.time) }
+      catalog?.estimateSize(video)?.let { putLong("size", it) }
+      catalog?.getVideoDownloadStatus(video)?.let { putInt("status", it.code) }
     }
   }
 

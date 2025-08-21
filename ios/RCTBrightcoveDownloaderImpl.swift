@@ -42,6 +42,29 @@ import React
     return nil
   }
 
+  private func createVideoDictionary(
+    from video: BCOVVideo,
+    offlineManager: BCOVOfflineVideoManager,
+    offlineVideoToken token: BCOVOfflineVideoToken
+  ) -> [String: Any] {
+    let status = offlineManager.offlineVideoStatus(forToken: token)?.downloadState.rawValue ?? -1
+
+    let dict: [String: Any] = [
+      "id": video.videoId ?? "",
+      "referenceId": video.referenceId ?? "",
+      "name": video.name ?? "",
+      "shortDescription": video.shortDescription ?? "",
+      "longDescription": video.longDescription ?? "",
+      "duration": video.duration ?? 0,
+      "thumbnailUri": video.offlineThumbnail ?? "",
+      "posterUri": video.offlinePoster ?? "",
+      "licenseExpiryDate": video.licenseExpirationTime,
+      "size": video.size,
+      "status": status,
+    ]
+    return dict
+  }
+
   @objc public func initModule(config: [String: Any]) {
     guard let accountId = config["accountId"] as? String, !accountId.isEmpty,
       let policyKey = config["policyKey"] as? String, !policyKey.isEmpty
@@ -63,7 +86,7 @@ import React
     eventEmitterDelegate = nil
   }
 
-  @objc public func getDownloadedVideos(
+  @objc public func getAllDownloadedVideos(
     resolve: RCTPromiseResolveBlock,
     reject: RCTPromiseRejectBlock
   ) {
@@ -71,31 +94,94 @@ import React
       reject("ERR_NO_OFFLINE_MANAGER", "Offline manager is nil", nil)
       return
     }
-    let tokens = offlineManager.offlineVideoTokens
     var result: [[String: Any]] = []
-    for token in tokens {
+    for token in offlineManager.offlineVideoTokens {
       guard let video = offlineManager.videoObject(fromOfflineVideoToken: token)
       else { continue }
-      
-      let status = offlineManager.offlineVideoStatus(forToken: token)
 
-      let videoDict: [String: Any] = [
-        "id": video.videoId ?? "",
-        "referenceId": video.referenceId ?? "",
-        "name": video.name ?? "",
-        "shortDescription": video.shortDescription ?? "",
-        "longDescription": video.longDescription ?? "",
-        "duration": video.duration ?? 0,
-        "thumbnailUri": video.offlineThumbnail ?? "",
-        "posterUri": video.offlinePoster ?? "",
-        "licenseExpiryDate": video.licenseExpirationTime,
-        "size": video.size,
-        "status": status?.downloadState.rawValue ?? -1
-      ]
+      let videoDict = createVideoDictionary(
+        from: video,
+        offlineManager: offlineManager,
+        offlineVideoToken: token
+      )
       print("videoDict \(videoDict)")
       result.append(videoDict)
     }
     resolve(result)
+  }
+
+  @objc public func getDownloadedVideoById(
+    _ id: String?,
+    resolve: RCTPromiseResolveBlock,
+    reject: RCTPromiseRejectBlock
+  ) {
+    guard let id, !id.isEmpty else {
+      reject("ERR_INVALID_ID", "Video ID is nil or empty", nil)
+      return
+    }
+
+    guard let offlineManager = BCOVOfflineVideoManager.sharedManager else {
+      reject("ERR_NO_OFFLINE_MANAGER", "Offline manager is nil", nil)
+      return
+    }
+
+    for token in offlineManager.offlineVideoTokens {
+      guard let video = offlineManager.videoObject(fromOfflineVideoToken: token),
+        video.videoId == id
+      else { continue }
+
+      let videoDict = createVideoDictionary(
+        from: video,
+        offlineManager: offlineManager,
+        offlineVideoToken: token
+      )
+      print("videoDict \(videoDict)")
+      resolve(videoDict)
+      return
+    }
+    reject("ERR_VIDEO_NOT_FOUND", "No downloaded video found with given ID", nil)
+  }
+
+  @objc public func estimateDownloadSize(
+    withVideoId id: String?,
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard let id, !id.isEmpty else {
+      reject("ERR_INVALID_ID", "Video ID is nil or empty", nil)
+      return
+    }
+
+    guard let playbackService else {
+      reject("ERR_NO_PLAYBACK_SERVICE", "Playback service is nil", nil)
+      return
+    }
+
+    guard let offlineManager = BCOVOfflineVideoManager.sharedManager else {
+      reject("ERR_NO_OFFLINE_MANAGER", "Offline manager is nil", nil)
+      return
+    }
+
+    let configuration = [BCOVPlaybackService.ConfigurationKeyAssetID: id]
+    playbackService.findVideo(withConfiguration: configuration, queryParameters: nil) {
+      (video: BCOVVideo?, jsonResponse: Any?, error: Error?) in
+      if let video {
+        offlineManager.estimateDownloadSize(
+          video, options: [BCOVOfflineVideoManager.RequestedBitrateKey: 0]
+        ) { (size: Double, e: (any Error)?) in
+          if let e {
+            reject("ERR_ESTIMATE_FAILED", "Failed to estimate download size", e)
+            print("Estimate error: \(e.localizedDescription)")
+            return
+          }
+          resolve(size * 1024 * 1024)
+        }
+        return
+      }
+
+      reject("ERR_VIDEO_NOT_FOUND", "Cannot find video with given ID", error)
+      print("Cannot find video: \(error?.localizedDescription ?? "unknown error")")
+    }
   }
 
   @objc public func findVideoToDownload(withId id: String?) {
@@ -243,16 +329,11 @@ import React
           "id": video.videoId ?? "",
           "reason": "Download video failed: \(error.localizedDescription)",
         ])
+        return
       }
-      print("request video download complete!")
-    }
-
-    offlineManager.estimateDownloadSize(
-      video, options: [BCOVOfflineVideoManager.RequestedBitrateKey: 0]
-    ) { [weak self] (size: Double, error: (any Error)?) in
-      self?.eventEmitterDelegate?.emitOnDownloadStarted([
+      self.eventEmitterDelegate?.emitOnDownloadStarted([
         "id": video.videoId ?? "",
-        "estimatedSize": size,
+        "referenceId": video.referenceId ?? "",
         "name": video.name ?? "",
         "shortDescription": video.shortDescription ?? "",
         "longDescription": video.longDescription ?? "",
@@ -260,6 +341,7 @@ import React
         "thumbnailUri": video.onlineThumbnail ?? "",
         "posterUri": video.onlinePoster ?? "",
       ])
+      print("request video download complete!")
     }
   }
 
