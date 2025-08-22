@@ -7,6 +7,10 @@ import BrightcovePlayerSDK
 import Foundation
 import React
 
+public typealias RCTPromiseResolveBlock = (Any?) -> Void
+
+public typealias RCTPromiseRejectBlock = (String?, String?, (any Error)?) -> Void
+
 @objc public protocol RCTBrightcoveDownloadEventEmitterDelegate {
   @objc func emitOnDownloadRequested(_ value: [String: Any]?)
   @objc func emitOnDownloadStarted(_ value: [String: Any]?)
