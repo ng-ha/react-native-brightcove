@@ -27,7 +27,7 @@ export type TBrightcoveDownloadedVideo = {
   /**
    * In bytes.
    */
-  size?: Double | null;
+  actualSize?: Double | null;
   status?: Int32;
 };
 
@@ -54,7 +54,7 @@ export type TBrightcoveDownloadStartedEvent = {
   /**
    * In bytes. Android only
    */
-  size?: Double;
+  estimatedSize?: Double;
   referenceId?: string;
   name?: string;
   shortDescription?: string;

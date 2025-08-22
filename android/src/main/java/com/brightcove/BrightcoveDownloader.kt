@@ -241,7 +241,7 @@ class BrightcoveDownloader(val reactContext: ReactApplicationContext) :
     ) {
       val payload = Arguments.createMap().apply {
         putString("id", video.id)
-        putLong("size", estimatedSize)
+        putLong("estimatedSize", estimatedSize)
         putString("referenceId", video.referenceId)
         putString("name", video.name)
         putLong("duration", video.durationLong)
@@ -330,7 +330,7 @@ class BrightcoveDownloader(val reactContext: ReactApplicationContext) :
       video.thumbnail?.let { putString("thumbnailUri", it.toString()) }
       video.posterImage?.let { putString("posterUri", it.toString()) }
       video.licenseExpiryDate?.let { putLong("licenseExpiryDate", it.time) }
-      catalog?.estimateSize(video)?.let { putLong("size", it) }
+      catalog?.estimateSize(video)?.let { putLong("actualSize", it) }
       catalog?.getVideoDownloadStatus(video)?.let { putInt("status", it.code) }
     }
   }

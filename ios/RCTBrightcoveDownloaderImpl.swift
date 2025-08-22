@@ -63,7 +63,7 @@ public typealias RCTPromiseRejectBlock = (String?, String?, (any Error)?) -> Voi
       "thumbnailUri": video.offlineThumbnail ?? "",
       "posterUri": video.offlinePoster ?? "",
       "licenseExpiryDate": video.licenseExpirationTime,
-      "size": video.size,
+      "actualSize": video.size,
       "status": status,
     ]
     return dict
