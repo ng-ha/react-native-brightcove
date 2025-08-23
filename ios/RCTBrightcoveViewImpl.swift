@@ -43,6 +43,13 @@ import UIKit
     setup()
   }
 
+  deinit {
+    eventEmitterDelegate = nil
+    playbackController.delegate = nil
+    playerView?.delegate = nil
+    NotificationCenter.default.removeObserver(self)
+  }
+
   private func setup() {
     setupAudioSession()
     registerForNotifications()
@@ -194,7 +201,6 @@ import UIKit
 
   @objc public func stopPlayback() {
     playbackController.setVideos([])
-    // cleanup ...
   }
 
   @objc public func toggleInViewPort(_ isInViewPort: Bool) {

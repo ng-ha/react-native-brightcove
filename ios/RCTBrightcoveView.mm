@@ -71,6 +71,36 @@ static inline NSString *NSStringFromStdString(const std::string &s) {
   _view.frame = self.bounds;
 }
 
+//- (void)ensureView {
+//  if (!_view) {
+//    _view = [[RCTBrightcoveViewImpl alloc] init];
+//    _view.eventEmitterDelegate = self;
+//    self.contentView = _view;
+//  }
+//}
+
+// Called when the view is placed into the recycle pool.
+// Reset state and restore default props to ensure a clean reuse.
+// Note: _view becomes nil after recycling => use ensureView in updateProps
+- (void)prepareForRecycle {
+  [super prepareForRecycle];
+  static const auto defaultProps = std::make_shared<const BrightcoveViewProps>();
+  _props = defaultProps;
+
+#if DEBUG
+  const auto &currentViewProps = *std::static_pointer_cast<BrightcoveViewProps const>(_props);
+  std::ostringstream oss;
+  oss << currentViewProps;
+  NSString *log = NSStringFromStdString(oss.str());
+  NSLog(@"prepareForRecycle: %@", log);
+#endif
+}
+
+// Disable recycling and force a new instance to be created each time.
++ (BOOL)shouldBeRecycled {
+  return NO;
+}
+
 #pragma mark - Update props
 
 - (void)updateProps:(Props::Shared const &)props oldProps:(Props::Shared const &)oldProps {
@@ -160,6 +190,7 @@ static inline NSString *NSStringFromStdString(const std::string &s) {
 
 - (void)stopPlayback {
   [_view stopPlayback];
+  _view = nil;
 }
 
 - (void)toggleFullscreen:(BOOL)isFullscreen {
