@@ -81,7 +81,7 @@ static inline NSString *NSStringFromStdString(const std::string &s) {
 
 // Called when the view is placed into the recycle pool.
 // Reset state and restore default props to ensure a clean reuse.
-// Note: _view becomes nil after recycling => use ensureView in updateProps
+// Note: _view might becomes nil after recycling => use ensureView in updateProps
 - (void)prepareForRecycle {
   [super prepareForRecycle];
   static const auto defaultProps = std::make_shared<const BrightcoveViewProps>();
@@ -190,7 +190,6 @@ static inline NSString *NSStringFromStdString(const std::string &s) {
 
 - (void)stopPlayback {
   [_view stopPlayback];
-  _view = nil;
 }
 
 - (void)toggleFullscreen:(BOOL)isFullscreen {
