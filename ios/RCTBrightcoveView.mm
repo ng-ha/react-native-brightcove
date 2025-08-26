@@ -25,7 +25,8 @@ inline std::ostream &operator<<(std::ostream &os, const BrightcoveViewProps &p) 
   os << "fullscreen:" << p.fullscreen << ", ";
   os << "disableDefaultControl:" << p.disableDefaultControl << ", ";
   os << "volume:" << p.volume << ", ";
-  os << "playbackRate:" << p.playbackRate;
+  os << "playbackRate:" << p.playbackRate << ", ";
+  os << "enablePictureInPicture:" << p.enablePictureInPicture;
   os << "}";
   return os;
 }
@@ -169,6 +170,11 @@ static inline NSString *NSStringFromStdString(const std::string &s) {
     [_view setDisableDefaultControl:newViewProps.disableDefaultControl];
   }
 
+  // enablePictureInPicture
+  if (oldViewProps.enablePictureInPicture != newViewProps.enablePictureInPicture) {
+    [_view setEnablePictureInPicture:newViewProps.enablePictureInPicture];
+  }
+
   [super updateProps:props oldProps:oldProps];
 }
 
@@ -274,6 +280,30 @@ static inline NSString *NSStringFromStdString(const std::string &s) {
   if ([name isEqualToString:@"onExitFullscreen"]) {
     BrightcoveViewEventEmitter::OnExitFullscreen eventStruct;
     self.eventEmitter.onExitFullscreen(eventStruct);
+    return;
+  }
+
+  if ([name isEqualToString:@"onDidEnterPictureInPictureMode"]) {
+    BrightcoveViewEventEmitter::OnDidEnterPictureInPictureMode eventStruct;
+    self.eventEmitter.onDidEnterPictureInPictureMode(eventStruct);
+    return;
+  }
+
+  if ([name isEqualToString:@"onDidExitPictureInPictureMode"]) {
+    BrightcoveViewEventEmitter::OnDidExitPictureInPictureMode eventStruct;
+    self.eventEmitter.onDidExitPictureInPictureMode(eventStruct);
+    return;
+  }
+
+  if ([name isEqualToString:@"onWillEnterPictureInPictureMode"]) {
+    BrightcoveViewEventEmitter::OnWillEnterPictureInPictureMode eventStruct;
+    self.eventEmitter.onWillEnterPictureInPictureMode(eventStruct);
+    return;
+  }
+
+  if ([name isEqualToString:@"onWillExitPictureInPictureMode"]) {
+    BrightcoveViewEventEmitter::OnWillExitPictureInPictureMode eventStruct;
+    self.eventEmitter.onWillExitPictureInPictureMode(eventStruct);
     return;
   }
 }

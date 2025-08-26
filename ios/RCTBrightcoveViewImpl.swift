@@ -3,6 +3,7 @@
 //  react-native-brightcove
 //
 
+import AVKit
 import BrightcovePlayerSDK
 import UIKit
 
@@ -18,6 +19,7 @@ import UIKit
   private var playing = false
   private var autoPlay = false
   private var disableDefaultControl = false
+  private var enablePictureInPicture = false
   private var lastProgress = 0
   private var lastBufferProgress: Float = 0.0
   private var playbackRate: Float = 1.0
@@ -47,19 +49,28 @@ import UIKit
     eventEmitterDelegate = nil
     playbackController.delegate = nil
     playerView?.delegate = nil
+    playerView?.removeFromSuperview()
     NotificationCenter.default.removeObserver(self)
   }
 
   private func setup() {
     setupAudioSession()
     registerForNotifications()
-
     playbackController.delegate = self
-    // playbackController.isAutoAdvance = true
+    setupControllerAndPlayer(withPictureInPicture: false)
+  }
 
+  private func setupControllerAndPlayer(withPictureInPicture isPictureInPictureEnabled: Bool) {
+    playbackController.allowsBackgroundAudioPlayback = isPictureInPictureEnabled
+    playbackController.isPictureInPictureActive = isPictureInPictureEnabled
+
+    let playerViewOptions = BCOVPUIPlayerViewOptions()
+    playerViewOptions.showPictureInPictureButton = isPictureInPictureEnabled
+
+    playerView?.removeFromSuperview()
     playerView = BCOVPUIPlayerView(
       playbackController: playbackController,
-      options: nil,
+      options: playerViewOptions,
       controlsView: BCOVPUIBasicControlView.withVODLayout()
     )
 
@@ -120,6 +131,20 @@ import UIKit
     //      }
     //    }
   }
+
+  #if DEBUG
+    public override func didAddSubview(_ subview: UIView) {
+      super.didAddSubview(subview)
+      print("✅ Added subview: \(subview)")
+      print("Current subviews: \(subviews)")
+    }
+
+    public override func willRemoveSubview(_ subview: UIView) {
+      super.willRemoveSubview(subview)
+      print("❌ Will remove subview: \(subview)")
+      print("Remaining subviews: \(subviews)")
+    }
+  #endif
 
   // MARK: - Set props
 
@@ -185,6 +210,12 @@ import UIKit
     }
   }
 
+  @objc public func setEnablePictureInPicture(_ enable: Bool) {
+    self.enablePictureInPicture = enable
+    setupControllerAndPlayer(withPictureInPicture: enable)
+    print("setEnablePictureInPicture \(enable)")
+  }
+
   // MARK: - Player Actions
 
   @objc public func play() {
@@ -204,12 +235,7 @@ import UIKit
   }
 
   @objc public func toggleInViewPort(_ isInViewPort: Bool) {
-    if isInViewPort {
-      inViewPort = true
-    } else {
-      inViewPort = false
-      pause()
-    }
+    self.inViewPort = isInViewPort
   }
 
   // MARK: - Notification Handling
@@ -234,7 +260,7 @@ import UIKit
     if notification.name == UIApplication.willResignActiveNotification {
       isAppInForeground = false
       toggleInViewPort(false)
-      pause()
+      if !enablePictureInPicture { pause() }
     }
 
     if notification.name == UIApplication.didBecomeActiveNotification {
@@ -257,6 +283,37 @@ extension RCTBrightcoveViewImpl: BCOVPUIPlayerViewDelegate {
     } else if screenMode == .full {
       eventEmitterDelegate?.emitEvent("onEnterFullscreen", withPayload: nil)
     }
+  }
+
+  public func pictureInPictureControllerDidStartPicture(
+    inPicture pictureInPictureController: AVPictureInPictureController
+  ) {
+    eventEmitterDelegate?.emitEvent("onDidEnterPictureInPictureMode", withPayload: nil)
+  }
+
+  public func pictureInPictureControllerDidStopPicture(
+    inPicture pictureInPictureController: AVPictureInPictureController
+  ) {
+    eventEmitterDelegate?.emitEvent("onDidExitPictureInPictureMode", withPayload: nil)
+  }
+
+  public func pictureInPictureControllerWillStartPicture(
+    inPicture pictureInPictureController: AVPictureInPictureController
+  ) {
+    eventEmitterDelegate?.emitEvent("onWillEnterPictureInPictureMode", withPayload: nil)
+  }
+
+  public func pictureInPictureControllerWillStopPicture(
+    inPicture pictureInPictureController: AVPictureInPictureController
+  ) {
+    eventEmitterDelegate?.emitEvent("onWillExitPictureInPictureMode", withPayload: nil)
+  }
+
+  public func picture(
+    _ pictureInPictureController: AVPictureInPictureController!,
+    failedToStartPictureInPictureWithError error: Error!
+  ) {
+    print("failedToStartPictureInPictureWithError \(error.localizedDescription)")
   }
 }
 
@@ -290,7 +347,9 @@ extension RCTBrightcoveViewImpl: BCOVPlaybackControllerDelegate {
     if bufferProgress.isFinite, lastBufferProgress != bufferProgress {
       lastBufferProgress = bufferProgress
       eventEmitterDelegate?.emitEvent(
-        "onUpdateBufferProgress", withPayload: ["bufferProgress": bufferProgress])
+        "onUpdateBufferProgress",
+        withPayload: ["bufferProgress": bufferProgress]
+      )
     }
   }
 

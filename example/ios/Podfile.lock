@@ -1649,7 +1649,7 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - SocketRocket
-  - react-native-brightcove (0.5.4):
+  - react-native-brightcove (0.5.5):
     - boost
     - Brightcove-Player-Core/XCFramework (~> 7.0.6)
     - DoubleConversion
