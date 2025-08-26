@@ -3,6 +3,7 @@
 //  react-native-brightcove
 //
 
+import AVKit
 import BrightcovePlayerSDK
 import UIKit
 
@@ -55,11 +56,15 @@ import UIKit
     registerForNotifications()
 
     playbackController.delegate = self
-    // playbackController.isAutoAdvance = true
+    playbackController.allowsBackgroundAudioPlayback = true
+    playbackController.isPictureInPictureActive = true
+
+    let playerViewOptions = BCOVPUIPlayerViewOptions()
+    playerViewOptions.showPictureInPictureButton = true
 
     playerView = BCOVPUIPlayerView(
       playbackController: playbackController,
-      options: nil,
+      options: playerViewOptions,
       controlsView: BCOVPUIBasicControlView.withVODLayout()
     )
 
@@ -208,7 +213,7 @@ import UIKit
       inViewPort = true
     } else {
       inViewPort = false
-      pause()
+      // pause()
     }
   }
 
@@ -234,13 +239,13 @@ import UIKit
     if notification.name == UIApplication.willResignActiveNotification {
       isAppInForeground = false
       toggleInViewPort(false)
-      pause()
+      // pause()
     }
 
     if notification.name == UIApplication.didBecomeActiveNotification {
       isAppInForeground = true
       toggleInViewPort(true)
-      if autoPlay { play() }
+      // if autoPlay { play() }
     }
   }
 }
@@ -257,6 +262,37 @@ extension RCTBrightcoveViewImpl: BCOVPUIPlayerViewDelegate {
     } else if screenMode == .full {
       eventEmitterDelegate?.emitEvent("onEnterFullscreen", withPayload: nil)
     }
+  }
+
+  public func pictureInPictureControllerDidStartPicture(
+    inPicture pictureInPictureController: AVPictureInPictureController
+  ) {
+    print("pictureInPictureControllerDidStartPicture")
+  }
+
+  public func pictureInPictureControllerDidStopPicture(
+    inPicture pictureInPictureController: AVPictureInPictureController
+  ) {
+    print("pictureInPictureControllerDidStopPicture")
+  }
+
+  public func pictureInPictureControllerWillStartPicture(
+    inPicture pictureInPictureController: AVPictureInPictureController
+  ) {
+    print("pictureInPictureControllerWillStartPicture")
+  }
+
+  public func pictureInPictureControllerWillStopPicture(
+    inPicture pictureInPictureController: AVPictureInPictureController
+  ) {
+    print("pictureInPictureControllerWillStopPicture")
+  }
+
+  public func picture(
+    _ pictureInPictureController: AVPictureInPictureController!,
+    failedToStartPictureInPictureWithError error: Error!
+  ) {
+    print("failedToStartPictureInPictureWithError \(error.localizedDescription)")
   }
 }
 
@@ -290,7 +326,9 @@ extension RCTBrightcoveViewImpl: BCOVPlaybackControllerDelegate {
     if bufferProgress.isFinite, lastBufferProgress != bufferProgress {
       lastBufferProgress = bufferProgress
       eventEmitterDelegate?.emitEvent(
-        "onUpdateBufferProgress", withPayload: ["bufferProgress": bufferProgress])
+        "onUpdateBufferProgress",
+        withPayload: ["bufferProgress": bufferProgress]
+      )
     }
   }
 

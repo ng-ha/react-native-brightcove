@@ -1649,7 +1649,7 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - SocketRocket
-  - react-native-brightcove (0.5.4):
+  - react-native-brightcove (0.5.5):
     - boost
     - Brightcove-Player-Core/XCFramework (~> 7.0.6)
     - DoubleConversion
@@ -2430,7 +2430,7 @@ SPEC CHECKSUMS:
   React-logger: 984ebd897afad067555d081deaf03f57c4315723
   React-Mapbuffer: 0c045c844ce6d85cde53e85ab163294c6adad349
   React-microtasksnativemodule: d9499269ad1f484ae71319bac1d9231447f2094e
-  react-native-brightcove: c8d56a43e10852120a39615e9531c7fa3e3d18c3
+  react-native-brightcove: dd61bdd05106d750103d087d0c708ac9e7b48335
   React-NativeModulesApple: 983f3483ef0a3446b56d490f09d579fba2442e17
   React-oscompat: 114036cd8f064558c9c1a0c04fc9ae5e1453706a
   React-perflogger: e7287fee27c16e3c8bd4d470f2361572b63be16b
