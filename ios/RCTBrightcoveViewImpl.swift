@@ -19,6 +19,7 @@ import UIKit
   private var playing = false
   private var autoPlay = false
   private var disableDefaultControl = false
+  private var enablePictureInPicture = false
   private var lastProgress = 0
   private var lastBufferProgress: Float = 0.0
   private var playbackRate: Float = 1.0
@@ -48,20 +49,25 @@ import UIKit
     eventEmitterDelegate = nil
     playbackController.delegate = nil
     playerView?.delegate = nil
+    playerView?.removeFromSuperview()
     NotificationCenter.default.removeObserver(self)
   }
 
   private func setup() {
     setupAudioSession()
     registerForNotifications()
-
     playbackController.delegate = self
-    playbackController.allowsBackgroundAudioPlayback = true
-    playbackController.isPictureInPictureActive = true
+    setupControllerAndPlayer(withPictureInPicture: false)
+  }
+
+  private func setupControllerAndPlayer(withPictureInPicture isPictureInPictureEnabled: Bool) {
+    playbackController.allowsBackgroundAudioPlayback = isPictureInPictureEnabled
+    playbackController.isPictureInPictureActive = isPictureInPictureEnabled
 
     let playerViewOptions = BCOVPUIPlayerViewOptions()
-    playerViewOptions.showPictureInPictureButton = true
+    playerViewOptions.showPictureInPictureButton = isPictureInPictureEnabled
 
+    playerView?.removeFromSuperview()
     playerView = BCOVPUIPlayerView(
       playbackController: playbackController,
       options: playerViewOptions,
@@ -125,6 +131,20 @@ import UIKit
     //      }
     //    }
   }
+
+  #if DEBUG
+    public override func didAddSubview(_ subview: UIView) {
+      super.didAddSubview(subview)
+      print("✅ Added subview: \(subview)")
+      print("Current subviews: \(subviews)")
+    }
+
+    public override func willRemoveSubview(_ subview: UIView) {
+      super.willRemoveSubview(subview)
+      print("❌ Will remove subview: \(subview)")
+      print("Remaining subviews: \(subviews)")
+    }
+  #endif
 
   // MARK: - Set props
 
@@ -190,6 +210,12 @@ import UIKit
     }
   }
 
+  @objc public func setEnablePictureInPicture(_ enable: Bool) {
+    self.enablePictureInPicture = enable
+    setupControllerAndPlayer(withPictureInPicture: enable)
+    print("setEnablePictureInPicture \(enable)")
+  }
+
   // MARK: - Player Actions
 
   @objc public func play() {
@@ -209,12 +235,7 @@ import UIKit
   }
 
   @objc public func toggleInViewPort(_ isInViewPort: Bool) {
-    if isInViewPort {
-      inViewPort = true
-    } else {
-      inViewPort = false
-      // pause()
-    }
+    self.inViewPort = isInViewPort
   }
 
   // MARK: - Notification Handling
@@ -239,13 +260,13 @@ import UIKit
     if notification.name == UIApplication.willResignActiveNotification {
       isAppInForeground = false
       toggleInViewPort(false)
-      // pause()
+      if !enablePictureInPicture { pause() }
     }
 
     if notification.name == UIApplication.didBecomeActiveNotification {
       isAppInForeground = true
       toggleInViewPort(true)
-      // if autoPlay { play() }
+      if autoPlay { play() }
     }
   }
 }
@@ -267,25 +288,25 @@ extension RCTBrightcoveViewImpl: BCOVPUIPlayerViewDelegate {
   public func pictureInPictureControllerDidStartPicture(
     inPicture pictureInPictureController: AVPictureInPictureController
   ) {
-    print("pictureInPictureControllerDidStartPicture")
+    eventEmitterDelegate?.emitEvent("onDidEnterPictureInPictureMode", withPayload: nil)
   }
 
   public func pictureInPictureControllerDidStopPicture(
     inPicture pictureInPictureController: AVPictureInPictureController
   ) {
-    print("pictureInPictureControllerDidStopPicture")
+    eventEmitterDelegate?.emitEvent("onDidExitPictureInPictureMode", withPayload: nil)
   }
 
   public func pictureInPictureControllerWillStartPicture(
     inPicture pictureInPictureController: AVPictureInPictureController
   ) {
-    print("pictureInPictureControllerWillStartPicture")
+    eventEmitterDelegate?.emitEvent("onWillEnterPictureInPictureMode", withPayload: nil)
   }
 
   public func pictureInPictureControllerWillStopPicture(
     inPicture pictureInPictureController: AVPictureInPictureController
   ) {
-    print("pictureInPictureControllerWillStopPicture")
+    eventEmitterDelegate?.emitEvent("onWillExitPictureInPictureMode", withPayload: nil)
   }
 
   public func picture(
