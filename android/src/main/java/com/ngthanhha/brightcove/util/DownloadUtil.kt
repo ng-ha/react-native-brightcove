@@ -8,7 +8,7 @@ import com.brightcove.player.offline.MediaDownloadable
 /**
  * A download util class to select audio and caption tracks
  */
-object BrightcoveDownloadUtil {
+object DownloadUtil {
   private val TAG: String = "ng-ha:${this.javaClass.simpleName}"
 
   /**

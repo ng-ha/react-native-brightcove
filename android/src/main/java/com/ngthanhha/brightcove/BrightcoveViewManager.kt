@@ -7,7 +7,7 @@ import com.facebook.react.uimanager.ViewManagerDelegate
 import com.facebook.react.uimanager.annotations.ReactProp
 import com.facebook.react.viewmanagers.BrightcoveViewManagerDelegate
 import com.facebook.react.viewmanagers.BrightcoveViewManagerInterface
-import com.ngthanhha.brightcove.util.BrightcoveEvent
+import com.ngthanhha.brightcove.util.EventName
 
 @ReactModule(name = BrightcoveViewManager.NAME)
 class BrightcoveViewManager : SimpleViewManager<BrightcoveView>(),
@@ -20,6 +20,11 @@ class BrightcoveViewManager : SimpleViewManager<BrightcoveView>(),
 
   override fun createViewInstance(context: ThemedReactContext): BrightcoveView =
     BrightcoveView(context)
+
+  override fun onDropViewInstance(view: BrightcoveView) {
+    view.cleanup()
+    super.onDropViewInstance(view)
+  }
 
   @ReactProp(name = "accountId")
   override fun setAccountId(view: BrightcoveView?, value: String?) {
@@ -76,6 +81,11 @@ class BrightcoveViewManager : SimpleViewManager<BrightcoveView>(),
     view?.setPlaybackRate(value)
   }
 
+  @ReactProp(name = "enablePictureInPicture")
+  override fun setEnablePictureInPicture(view: BrightcoveView?, value: Boolean) {
+    view?.setEnablePictureInPicture(value)
+  }
+
   override fun play(view: BrightcoveView?) {
     view?.play()
   }
@@ -106,7 +116,7 @@ class BrightcoveViewManager : SimpleViewManager<BrightcoveView>(),
 
   override fun getExportedCustomBubblingEventTypeConstants(): Map<String, Any> {
     val result = mutableMapOf<String, Any>()
-    val events = BrightcoveEvent.entries.map { it.eventName }
+    val events = EventName.entries.map { it.eventName }
     for (event in events) {
       result[event] = mapOf(
         "phasedRegistrationNames" to mapOf(

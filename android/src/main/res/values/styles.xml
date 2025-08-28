@@ -1,0 +1,6 @@
+<resources>
+  <!-- This enables the Picture-in-Picture button in the Brightcove Control Bar -->
+  <style name="BrightcoveControlBar" parent="BrightcoveControlBarDefault">
+    <item name="brightcove_picture_in_picture">true</item>
+  </style>
+</resources>

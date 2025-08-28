@@ -1,14 +1,23 @@
 import { useRef, useState } from 'react';
 import { Button, ScrollView, StyleSheet, View } from 'react-native';
+
+import { useRoute, type RouteProp } from '@react-navigation/native';
 import { BrightcoveView, Commands } from 'react-native-brightcove';
 import { accountId, policyKey, videoId } from '../configs';
+import type { RootStackParamList } from '../App';
 
 export function PlayerScreen() {
+  const enablePiP =
+    useRoute<RouteProp<RootStackParamList, 'Player'>>().params
+      ?.enablePictureInPicture;
   const [volume, setVolume] = useState<number | undefined>();
   const [fullscreen, setFullscreen] = useState<boolean | undefined>();
   const [disableDefaultControl, setDisableDefaultControl] = useState<
     boolean | undefined
   >();
+  const [enablePictureInPicture, setEnablePictureInPicture] = useState<
+    boolean | undefined
+  >(enablePiP);
   const videoPlayer = useRef<React.ElementRef<typeof View> | null>(null);
 
   const stopPlayback = () => {
@@ -55,6 +64,7 @@ export function PlayerScreen() {
         disableDefaultControl={disableDefaultControl}
         volume={volume}
         playbackRate={1}
+        enablePictureInPicture={enablePictureInPicture}
         // onReady={(e) => console.log('onReady', e.nativeEvent)}
         // onPlay={(e) => console.log('onPlay', e.nativeEvent)}
         // onPause={(e) => console.log('onPause', e.nativeEvent)}
@@ -68,6 +78,18 @@ export function PlayerScreen() {
           console.log('onEnterFullscreen', e.nativeEvent)
         }
         onExitFullscreen={(e) => console.log('onExitFullscreen', e.nativeEvent)}
+        onWillEnterPictureInPictureMode={(e) =>
+          console.log('onWillEnterPictureInPictureMode', e.nativeEvent)
+        }
+        onWillExitPictureInPictureMode={(e) =>
+          console.log('onWillExitPictureInPictureMode', e.nativeEvent)
+        }
+        onDidEnterPictureInPictureMode={(e) =>
+          console.log('onDidEnterPictureInPictureMode', e.nativeEvent)
+        }
+        onDidExitPictureInPictureMode={(e) =>
+          console.log('onDidExitPictureInPictureMode', e.nativeEvent)
+        }
       />
       <ScrollView>
         <Button title="Play" onPress={play} />
@@ -92,6 +114,10 @@ export function PlayerScreen() {
         <Button
           title={`Disable default control: ${disableDefaultControl}`}
           onPress={() => setDisableDefaultControl(!disableDefaultControl)}
+        />
+        <Button
+          title={`Enable picture-in-picture: ${enablePictureInPicture}`}
+          onPress={() => setEnablePictureInPicture(!enablePictureInPicture)}
         />
       </ScrollView>
     </View>

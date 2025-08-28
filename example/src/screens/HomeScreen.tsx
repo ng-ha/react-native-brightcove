@@ -59,6 +59,10 @@ export function HomeScreen() {
 
   const goToPlayer = () => navigation.navigate('Player');
 
+  const goToPlayerWithPictureInPicture = () => {
+    navigation.navigate('Player', { enablePictureInPicture: true });
+  };
+
   const getAllDownloadedVideos = () => {
     BrightcoveDownloader.getAllDownloadedVideos()
       .then((res) => {
@@ -118,6 +122,10 @@ export function HomeScreen() {
     <View style={styles.container}>
       <Text>{`Status: ${status}`}</Text>
       <Button title="Go to player" onPress={goToPlayer} />
+      <Button
+        title="Go to player with PiP"
+        onPress={goToPlayerWithPictureInPicture}
+      />
       <Button
         title="Get all downloaded videos"
         onPress={getAllDownloadedVideos}
