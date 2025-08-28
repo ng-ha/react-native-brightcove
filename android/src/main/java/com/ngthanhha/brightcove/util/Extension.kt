@@ -1,4 +1,4 @@
-package com.brightcove.util
+package com.ngthanhha.brightcove.util
 
 fun Map<String, Any?>.getInt(key: String): Int? = when (val value = this[key]) {
   is Int -> value
