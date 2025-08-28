@@ -38,6 +38,7 @@ interface NativeProps extends ViewProps {
    */
   volume?: Float | null;
   playbackRate?: Float | null;
+  enablePictureInPicture?: boolean | null;
   onReady?: CodegenTypes.BubblingEventHandler<TBrightcovePlayerEventBase> | null;
   onPlay?: CodegenTypes.BubblingEventHandler<TBrightcovePlayerEventBase> | null;
   onPause?: CodegenTypes.BubblingEventHandler<TBrightcovePlayerEventBase> | null;
@@ -47,6 +48,13 @@ interface NativeProps extends ViewProps {
   onChangeDuration?: CodegenTypes.BubblingEventHandler<TBrightcovePlayerEventDuration> | null;
   onEnterFullscreen?: CodegenTypes.BubblingEventHandler<TBrightcovePlayerEventBase> | null;
   onExitFullscreen?: CodegenTypes.BubblingEventHandler<TBrightcovePlayerEventBase> | null;
+  onDidEnterPictureInPictureMode?: CodegenTypes.BubblingEventHandler<TBrightcovePlayerEventBase> | null;
+  onDidExitPictureInPictureMode?: CodegenTypes.BubblingEventHandler<TBrightcovePlayerEventBase> | null;
+  onWillEnterPictureInPictureMode?: CodegenTypes.BubblingEventHandler<TBrightcovePlayerEventBase> | null;
+  /**
+   * iOS only. Not supported on Android.
+   */
+  onWillExitPictureInPictureMode?: CodegenTypes.BubblingEventHandler<TBrightcovePlayerEventBase> | null;
 }
 
 /**

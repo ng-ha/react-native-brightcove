@@ -17,7 +17,7 @@ import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReadableMap
-import com.ngthanhha.brightcove.util.BrightcoveDownloadUtil
+import com.ngthanhha.brightcove.util.DownloadUtil
 import java.io.Serializable
 
 class BrightcoveDownloader(val reactContext: ReactApplicationContext) :
@@ -142,7 +142,7 @@ class BrightcoveDownloader(val reactContext: ReactApplicationContext) :
       override fun onVideo(video: Video?) {
         if (video == null) return
         catalog?.getMediaFormatTracksAvailable(video) { mediaDownloadable, bundle ->
-          BrightcoveDownloadUtil.selectMediaFormatTracksAvailable(mediaDownloadable, bundle)
+          DownloadUtil.selectMediaFormatTracksAvailable(mediaDownloadable, bundle)
           catalog?.downloadVideo(video, object : OfflineCallback<DownloadStatus?> {
             override fun onSuccess(downloadStatus: DownloadStatus?) {}
 

@@ -3,9 +3,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { HomeScreen } from './screens/HomeScreen';
 import { PlayerScreen } from './screens/PlayerScreen';
 
-type RootStackParamList = {
+export type RootStackParamList = {
   Home: undefined;
-  Player: undefined;
+  Player: { enablePictureInPicture?: boolean } | undefined;
 };
 
 declare global {

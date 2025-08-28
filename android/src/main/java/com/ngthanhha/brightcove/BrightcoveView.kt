@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.util.AttributeSet
 import android.util.Log
+import android.util.Rational
 import android.view.Choreographer
 import android.view.SurfaceView
 import android.view.View
@@ -26,14 +27,16 @@ import com.brightcove.player.model.Playlist
 import com.brightcove.player.model.Video
 import com.brightcove.player.network.DownloadStatus
 import com.brightcove.player.network.HttpRequestConfig
+import com.brightcove.player.pictureinpicture.PictureInPictureManager
 import com.brightcove.player.view.BrightcoveExoPlayerVideoView
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.LifecycleEventListener
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.UIManagerHelper
-import com.ngthanhha.brightcove.util.BrightcoveEvent
 import com.ngthanhha.brightcove.util.EventFactory
+import com.ngthanhha.brightcove.util.EventName
+import com.ngthanhha.brightcove.util.PictureInPictureUtil
 import com.ngthanhha.brightcove.util.getInt
 
 class BrightcoveView : RelativeLayout, LifecycleEventListener {
@@ -54,7 +57,6 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
   private var playbackRate = 1f
   private var frameCounter = 0
   private var stopFrameCounter = false
-  private val pasToken = "YOUR_PAS_TOKEN"
 
   constructor(context: Context?) : super(context)
 
@@ -85,51 +87,114 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
     }
     eventEmitter.on(EventType.READY_TO_PLAY) {
       val payload = Arguments.createMap()
-      emitOnEvent(BrightcoveEvent.ON_READY.eventName, payload)
+      emitOnEvent(EventName.ON_READY.eventName, payload)
     }
     eventEmitter.on(EventType.DID_PLAY) {
       playing = true
       val payload = Arguments.createMap()
-      emitOnEvent(BrightcoveEvent.ON_PLAY.eventName, payload)
+      emitOnEvent(EventName.ON_PLAY.eventName, payload)
     }
     eventEmitter.on(EventType.DID_PAUSE) {
       playing = false
       val payload = Arguments.createMap()
-      emitOnEvent(BrightcoveEvent.ON_PAUSE.eventName, payload)
+      emitOnEvent(EventName.ON_PAUSE.eventName, payload)
     }
     eventEmitter.on(EventType.COMPLETED) {
       val payload = Arguments.createMap()
-      emitOnEvent(BrightcoveEvent.ON_END.eventName, payload)
+      emitOnEvent(EventName.ON_END.eventName, payload)
     }
     eventEmitter.on(EventType.PROGRESS) {
       val currentTime = it.properties.getInt(Event.PLAYHEAD_POSITION_LONG)
       if (currentTime == null) return@on
       val payload = Arguments.createMap().apply { putInt("currentTime", currentTime) }
-      emitOnEvent(BrightcoveEvent.ON_PROGRESS.eventName, payload)
+      emitOnEvent(EventName.ON_PROGRESS.eventName, payload)
     }
     eventEmitter.on(EventType.ENTER_FULL_SCREEN) {
       val payload = Arguments.createMap()
-      emitOnEvent(BrightcoveEvent.ON_ENTER_FULLSCREEN.eventName, payload)
+      emitOnEvent(EventName.ON_ENTER_FULLSCREEN.eventName, payload)
     }
     eventEmitter.on(EventType.EXIT_FULL_SCREEN) {
       val payload = Arguments.createMap()
-      emitOnEvent(BrightcoveEvent.ON_EXIT_FULLSCREEN.eventName, payload)
+      emitOnEvent(EventName.ON_EXIT_FULLSCREEN.eventName, payload)
     }
     eventEmitter.on(EventType.VIDEO_DURATION_CHANGED) {
       val duration = it.properties.getInt(Event.VIDEO_DURATION_LONG)
       if (duration == null) return@on
       val payload = Arguments.createMap().apply { putInt("duration", duration) }
-      emitOnEvent(BrightcoveEvent.ON_CHANGE_DURATION.eventName, payload)
+      emitOnEvent(EventName.ON_CHANGE_DURATION.eventName, payload)
     }
     eventEmitter.on(EventType.BUFFERED_UPDATE) {
       val bufferProgress = it.properties.getInt(Event.PERCENT_COMPLETE)
       if (bufferProgress == null) return@on
       val payload = Arguments.createMap().apply { putInt("bufferProgress", bufferProgress) }
-      emitOnEvent(BrightcoveEvent.ON_UPDATE_BUFFER_PROGRESS.eventName, payload)
+      emitOnEvent(EventName.ON_UPDATE_BUFFER_PROGRESS.eventName, payload)
     }
     eventEmitter.on(EventType.AD_BREAK_STARTED) {
       val payload = Arguments.createMap()
-      emitOnEvent(BrightcoveEvent.ON_ADS_PLAYING.eventName, payload)
+      emitOnEvent(EventName.ON_ADS_PLAYING.eventName, payload)
+    }
+    eventEmitter.on(EventType.DID_ENTER_PICTURE_IN_PICTURE_MODE) {
+      val payload = Arguments.createMap()
+      emitOnEvent(EventName.ON_DID_ENTER_PICTURE_IN_PICTURE_MODE.eventName, payload)
+    }
+    eventEmitter.on(EventType.DID_EXIT_PICTURE_IN_PICTURE_MODE) {
+      val payload = Arguments.createMap()
+      emitOnEvent(EventName.ON_DID_EXIT_PICTURE_IN_PICTURE_MODE.eventName, payload)
+    }
+    eventEmitter.on(EventType.ENTER_PICTURE_IN_PICTURE_MODE) {
+      val payload = Arguments.createMap()
+      emitOnEvent(EventName.ON_WILL_ENTER_PICTURE_IN_PICTURE_MODE.eventName, payload)
+    }
+    eventEmitter.on(EventType.EXIT_PICTURE_IN_PICTURE_MODE) {
+      val payload = Arguments.createMap()
+      emitOnEvent(EventName.ON_WILL_EXIT_PICTURE_IN_PICTURE_MODE.eventName, payload)
+    }
+  }
+
+  // Lifecycle handling
+
+  override fun onHostResume() {
+    Log.d(tag, "onHostResume")
+    if (autoPlay) play()
+    toggleInViewPort(true)
+    stopFrameCounter = false
+    setupLayout()
+  }
+
+  override fun onHostPause() {
+    Log.d(tag, "onHostPause")
+    if (!PictureInPictureUtil.enablePictureInPicture) pause()
+    toggleInViewPort(false)
+    stopFrameCounter = true
+  }
+
+  override fun onHostDestroy() {
+    Log.d(tag, "onHostDestroy")
+    cleanup()
+  }
+
+  fun cleanup() {
+    Log.d(tag, "cleanup")
+    toggleInViewPort(false)
+    stopFrameCounter = true
+    brightcoveVideoView.clear()
+    removeAllViews()
+    (context as ThemedReactContext).removeLifecycleEventListener(this)
+    if (PictureInPictureUtil.enablePictureInPicture) {
+      val activity = (context as ThemedReactContext).currentActivity!!
+      PictureInPictureManager.getInstance().unregisterActivity(activity)
+      PictureInPictureUtil.enablePictureInPicture = false
+    }
+  }
+
+  override fun onConfigurationChanged(configuration: Configuration) {
+    super.onConfigurationChanged(configuration)
+    if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE && !brightcoveVideoView.isFullScreen) {
+      brightcoveVideoView.eventEmitter.emit(EventType.ENTER_FULL_SCREEN)
+      return
+    }
+    if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT && brightcoveVideoView.isFullScreen) {
+      brightcoveVideoView.eventEmitter.emit(EventType.EXIT_FULL_SCREEN)
     }
   }
 
@@ -219,6 +284,21 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
     }
   }
 
+  fun setEnablePictureInPicture(enabled: Boolean) {
+    val activity = (context as ThemedReactContext).currentActivity!!
+
+    if (enabled) {
+      PictureInPictureManager.getInstance()
+        .setOnUserLeaveEnabled(true)
+        .setAspectRatio(Rational(16, 9))
+        .registerActivity(activity, brightcoveVideoView)
+    } else if (PictureInPictureUtil.enablePictureInPicture) {
+      PictureInPictureManager.getInstance().unregisterActivity(activity)
+    }
+
+    PictureInPictureUtil.enablePictureInPicture = enabled
+  }
+
   // Commands
 
   fun play() {
@@ -241,12 +321,7 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
   }
 
   fun toggleInViewPort(inViewPort: Boolean) {
-    if (inViewPort) {
-      this.inViewPort = true
-    } else {
-      this.inViewPort = false
-      brightcoveVideoView.pause()
-    }
+    this.inViewPort = inViewPort
   }
 
   fun toggleFullscreen(isFullscreen: Boolean) {
@@ -325,7 +400,7 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
     if (playlistReferenceId != null) {
       val httpRequestConfig = HttpRequestConfig
         .Builder()
-        .setBrightcoveAuthorizationToken(pasToken)
+        // .setBrightcoveAuthorizationToken(pasToken)
         .build()
 
       catalog?.findPlaylistByReferenceID(
@@ -381,40 +456,5 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
       )
       child.layout(0, 0, child.measuredWidth, child.measuredHeight)
     }
-  }
-
-  // Lifecycle handling
-
-  override fun onConfigurationChanged(configuration: Configuration) {
-    super.onConfigurationChanged(configuration)
-    if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE && !brightcoveVideoView.isFullScreen) {
-      brightcoveVideoView.eventEmitter.emit(EventType.ENTER_FULL_SCREEN)
-      return
-    }
-    if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT && brightcoveVideoView.isFullScreen) {
-      brightcoveVideoView.eventEmitter.emit(EventType.EXIT_FULL_SCREEN)
-    }
-  }
-
-  override fun onHostResume() {
-    if (autoPlay) play()
-    toggleInViewPort(true)
-    stopFrameCounter = false
-    setupLayout()
-    Log.d(tag, "onHostResume")
-  }
-
-  override fun onHostPause() {
-    pause()
-    toggleInViewPort(false)
-    stopFrameCounter = true
-    Log.d(tag, "onHostPause")
-  }
-
-  override fun onHostDestroy() {
-    brightcoveVideoView.clear()
-    removeAllViews()
-    (context as ThemedReactContext).removeLifecycleEventListener(this)
-    Log.d(tag, "onHostDestroy")
   }
 }
