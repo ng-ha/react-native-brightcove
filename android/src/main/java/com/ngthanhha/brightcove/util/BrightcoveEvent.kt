@@ -1,4 +1,4 @@
-package com.brightcove.util
+package com.ngthanhha.brightcove.util
 
 enum class BrightcoveEvent(val eventName: String) {
   ON_READY("onReady"),

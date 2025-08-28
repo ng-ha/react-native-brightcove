@@ -154,7 +154,7 @@
     "type": "all",
     "jsSrcsDir": "src",
     "android": {
-      "javaPackageName": "com.brightcove"
+      "javaPackageName": "com.ngthanhha.brightcove"
     },
     "ios": {
       "components": {

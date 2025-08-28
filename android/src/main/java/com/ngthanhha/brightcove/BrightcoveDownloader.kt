@@ -1,4 +1,4 @@
-package com.brightcove
+package com.ngthanhha.brightcove
 
 import android.text.format.Formatter
 import android.util.Log
@@ -13,11 +13,11 @@ import com.brightcove.player.model.Video
 import com.brightcove.player.network.DownloadStatus
 import com.brightcove.player.network.HttpRequestConfig
 import com.brightcove.player.offline.MediaDownloadable.DownloadEventListener
-import com.brightcove.util.BrightcoveDownloadUtil
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReadableMap
+import com.ngthanhha.brightcove.util.BrightcoveDownloadUtil
 import java.io.Serializable
 
 class BrightcoveDownloader(val reactContext: ReactApplicationContext) :

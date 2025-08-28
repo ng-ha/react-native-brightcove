@@ -26,7 +26,7 @@ def getExtOrIntegerDefault(name) {
 }
 
 android {
-  namespace "com.brightcove"
+  namespace "com.ngthanhha.brightcove"
 
   compileSdkVersion getExtOrIntegerDefault("compileSdkVersion")
 
@@ -84,5 +84,5 @@ dependencies {
 react {
   jsRootDir = file("../src/")
   libraryName = "BrightcoveView"
-  codegenJavaPackageName = "com.brightcove"
+  codegenJavaPackageName = "com.ngthanhha.brightcove"
 }

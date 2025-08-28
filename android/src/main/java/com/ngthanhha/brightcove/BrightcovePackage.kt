@@ -1,4 +1,4 @@
-package com.brightcove
+package com.ngthanhha.brightcove
 
 import com.facebook.react.BaseReactPackage
 import com.facebook.react.bridge.NativeModule

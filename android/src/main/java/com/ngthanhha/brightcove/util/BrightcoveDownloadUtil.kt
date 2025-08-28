@@ -1,4 +1,4 @@
-package com.brightcove.util
+package com.ngthanhha.brightcove.util
 
 import android.os.Bundle
 import android.util.Log

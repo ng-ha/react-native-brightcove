@@ -1,4 +1,4 @@
-package com.brightcove
+package com.ngthanhha.brightcove
 
 import android.content.Context
 import android.content.res.Configuration
@@ -19,7 +19,6 @@ import com.brightcove.player.edge.OfflineCallback
 import com.brightcove.player.edge.OfflineCatalog
 import com.brightcove.player.edge.OfflineStoreManager
 import com.brightcove.player.edge.PlaylistListener
-import com.brightcove.player.edge.VideoListener
 import com.brightcove.player.event.Event
 import com.brightcove.player.event.EventType
 import com.brightcove.player.mediacontroller.BrightcoveMediaController
@@ -28,14 +27,14 @@ import com.brightcove.player.model.Video
 import com.brightcove.player.network.DownloadStatus
 import com.brightcove.player.network.HttpRequestConfig
 import com.brightcove.player.view.BrightcoveExoPlayerVideoView
-import com.brightcove.util.BrightcoveEvent
-import com.brightcove.util.EventFactory
-import com.brightcove.util.getInt
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.LifecycleEventListener
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.UIManagerHelper
+import com.ngthanhha.brightcove.util.BrightcoveEvent
+import com.ngthanhha.brightcove.util.EventFactory
+import com.ngthanhha.brightcove.util.getInt
 
 class BrightcoveView : RelativeLayout, LifecycleEventListener {
   private val tag: String = "ng-ha:${this.javaClass.simpleName}"
