@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Button, ScrollView, StyleSheet, View } from 'react-native';
+import { Button, Platform, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useRoute, type RouteProp } from '@react-navigation/native';
 import { BrightcoveView, Commands } from 'react-native-brightcove';
@@ -18,6 +18,7 @@ export function PlayerScreen() {
   const [enablePictureInPicture, setEnablePictureInPicture] = useState<
     boolean | undefined
   >(enablePiP);
+  const [inPiP, setInPiP] = useState(false);
   const videoPlayer = useRef<React.ElementRef<typeof View> | null>(null);
 
   const stopPlayback = () => {
@@ -78,48 +79,54 @@ export function PlayerScreen() {
           console.log('onEnterFullscreen', e.nativeEvent)
         }
         onExitFullscreen={(e) => console.log('onExitFullscreen', e.nativeEvent)}
-        onWillEnterPictureInPictureMode={(e) =>
-          console.log('onWillEnterPictureInPictureMode', e.nativeEvent)
-        }
-        onWillExitPictureInPictureMode={(e) =>
-          console.log('onWillExitPictureInPictureMode', e.nativeEvent)
-        }
-        onDidEnterPictureInPictureMode={(e) =>
-          console.log('onDidEnterPictureInPictureMode', e.nativeEvent)
-        }
-        onDidExitPictureInPictureMode={(e) =>
-          console.log('onDidExitPictureInPictureMode', e.nativeEvent)
-        }
+        onWillEnterPictureInPictureMode={(e) => {
+          console.log('onWillEnterPictureInPictureMode', e.nativeEvent);
+          if (!inPiP) setInPiP(true);
+        }}
+        onWillExitPictureInPictureMode={(e) => {
+          console.log('onWillExitPictureInPictureMode', e.nativeEvent);
+          if (inPiP) setInPiP(false);
+        }}
+        onDidEnterPictureInPictureMode={(e) => {
+          console.log('onDidEnterPictureInPictureMode', e.nativeEvent);
+          if (!inPiP) setInPiP(true);
+        }}
+        onDidExitPictureInPictureMode={(e) => {
+          console.log('onDidExitPictureInPictureMode', e.nativeEvent);
+          if (inPiP) setInPiP(false);
+        }}
       />
-      <ScrollView>
-        <Button title="Play" onPress={play} />
-        <Button title="Pause" onPress={pause} />
-        <Button title="Seek" onPress={seekTo} />
-        <Button title="Stop" onPress={stopPlayback} />
-        <Button title="Set volume 0.2" onPress={() => setVolume(0.2)} />
-        <Button title="Set volume 0.5" onPress={() => setVolume(0.5)} />
-        <Button title="Set volume 1" onPress={() => setVolume(1)} />
-        <Button
-          title={`fullscreen: ${fullscreen}`}
-          onPress={() => setFullscreen(!fullscreen)}
-        />
-        <Button
-          title="Toggle fullscreen: true"
-          onPress={() => toggleFullscreen(true)}
-        />
-        <Button
-          title="Toggle fullscreen: false"
-          onPress={() => toggleFullscreen(false)}
-        />
-        <Button
-          title={`Disable default control: ${disableDefaultControl}`}
-          onPress={() => setDisableDefaultControl(!disableDefaultControl)}
-        />
-        <Button
-          title={`Enable picture-in-picture: ${enablePictureInPicture}`}
-          onPress={() => setEnablePictureInPicture(!enablePictureInPicture)}
-        />
-      </ScrollView>
+      {(Platform.OS === 'ios' || (Platform.OS === 'android' && !inPiP)) && (
+        <ScrollView>
+          <Button title="Play" onPress={play} />
+          <Button title="Pause" onPress={pause} />
+          <Button title="Seek" onPress={seekTo} />
+          <Button title="Stop" onPress={stopPlayback} />
+          <Button title="Set volume 0.2" onPress={() => setVolume(0.2)} />
+          <Button title="Set volume 0.5" onPress={() => setVolume(0.5)} />
+          <Button title="Set volume 1" onPress={() => setVolume(1)} />
+          <Button
+            title={`fullscreen: ${fullscreen}`}
+            onPress={() => setFullscreen(!fullscreen)}
+          />
+          <Button
+            title="Toggle fullscreen: true"
+            onPress={() => toggleFullscreen(true)}
+          />
+          <Button
+            title="Toggle fullscreen: false"
+            onPress={() => toggleFullscreen(false)}
+          />
+          <Button
+            title={`Disable default control: ${disableDefaultControl}`}
+            onPress={() => setDisableDefaultControl(!disableDefaultControl)}
+          />
+          <Button
+            title={`Enable picture-in-picture: ${enablePictureInPicture}`}
+            onPress={() => setEnablePictureInPicture(!enablePictureInPicture)}
+          />
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -132,7 +139,6 @@ const styles = StyleSheet.create({
   },
   video: {
     width: '100%',
-    height: 200,
-    marginVertical: 20,
+    aspectRatio: 16 / 9,
   },
 });
