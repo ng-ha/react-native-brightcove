@@ -8,7 +8,6 @@ import com.brightcove.player.pictureinpicture.PictureInPictureManagerException
 class PictureInPictureUtil {
   companion object {
     private val tag: String = "ng-ha:${PictureInPictureUtil::class.java.simpleName}"
-    var enablePictureInPicture: Boolean = false
 
     fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
       PictureInPictureManager.getInstance()
@@ -16,7 +15,7 @@ class PictureInPictureUtil {
     }
 
     fun onUserLeaveHint() {
-      if (!enablePictureInPicture) return
+      if (!PictureInPictureManager.getInstance().isPictureInPictureEnabled) return
       try {
         PictureInPictureManager.getInstance().onUserLeaveHint()
       } catch (e: PictureInPictureManagerException) {
