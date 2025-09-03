@@ -1,8 +1,11 @@
 package com.ngthanhha.brightcove
 
+import android.app.PictureInPictureParams
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.Rect
+import android.os.Build
 import android.util.AttributeSet
 import android.util.Log
 import android.util.Rational
@@ -134,6 +137,7 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
       emitOnEvent(EventName.ON_ADS_PLAYING.eventName, payload)
     }
     eventEmitter.on(EventType.DID_ENTER_PICTURE_IN_PICTURE_MODE) {
+      updatePictureInPictureParams()
       val payload = Arguments.createMap()
       emitOnEvent(EventName.ON_DID_ENTER_PICTURE_IN_PICTURE_MODE.eventName, payload)
     }
@@ -163,7 +167,7 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
 
   override fun onHostPause() {
     Log.d(tag, "onHostPause")
-    if (!PictureInPictureUtil.enablePictureInPicture) pause()
+    if (!PictureInPictureManager.getInstance().isPictureInPictureEnabled) pause()
     toggleInViewPort(false)
     stopFrameCounter = true
   }
@@ -180,10 +184,10 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
     brightcoveVideoView.clear()
     removeAllViews()
     (context as ThemedReactContext).removeLifecycleEventListener(this)
-    if (PictureInPictureUtil.enablePictureInPicture) {
+    val pipManager = PictureInPictureManager.getInstance()
+    if (pipManager.isPictureInPictureEnabled) {
       val activity = (context as ThemedReactContext).currentActivity!!
-      PictureInPictureManager.getInstance().unregisterActivity(activity)
-      PictureInPictureUtil.enablePictureInPicture = false
+      pipManager.unregisterActivity(activity)
     }
   }
 
@@ -196,6 +200,11 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
     if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT && brightcoveVideoView.isFullScreen) {
       brightcoveVideoView.eventEmitter.emit(EventType.EXIT_FULL_SCREEN)
     }
+  }
+
+  override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
+    super.onLayout(changed, l, t, r, b)
+    Log.d(tag, "onLayout changed: $changed l: $l t: $t r: $r b: $b")
   }
 
   // Props
@@ -286,17 +295,20 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
 
   fun setEnablePictureInPicture(enabled: Boolean) {
     val activity = (context as ThemedReactContext).currentActivity!!
+    val pipManager = PictureInPictureManager.getInstance()
 
     if (enabled) {
-      PictureInPictureManager.getInstance()
+      val sourceRectHint = Rect()
+      getGlobalVisibleRect(sourceRectHint)
+
+      pipManager
         .setOnUserLeaveEnabled(true)
         .setAspectRatio(Rational(16, 9))
+        .setSourceRectHint(sourceRectHint)
         .registerActivity(activity, brightcoveVideoView)
-    } else if (PictureInPictureUtil.enablePictureInPicture) {
-      PictureInPictureManager.getInstance().unregisterActivity(activity)
+    } else if (pipManager.isPictureInPictureEnabled) {
+      pipManager.unregisterActivity(activity)
     }
-
-    PictureInPictureUtil.enablePictureInPicture = enabled
   }
 
   // Commands
@@ -329,6 +341,29 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
   }
 
   // Private methods
+
+  private fun updatePictureInPictureParams() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+
+    val activity = (context as ThemedReactContext).currentActivity!!
+    val sourceRectHint = Rect()
+    getGlobalVisibleRect(sourceRectHint)
+
+    // Change the aspect ratio slightly to trigger a layout update
+    val params = PictureInPictureParams.Builder()
+      .setAspectRatio(Rational(64, 35))
+      .setSourceRectHint(sourceRectHint)
+      .build()
+    activity.setPictureInPictureParams(params)
+
+    // Handler(Looper.getMainLooper()).postDelayed({
+    //   val params = PictureInPictureParams.Builder()
+    //     .setAspectRatio(Rational(64, 36))
+    //     .setSourceRectHint(sourceRectHint)
+    //     .build()
+    //   activity.setPictureInPictureParams(params)
+    // }, 200)
+  }
 
   private fun emitOnEvent(eventName: String, payload: WritableMap) {
     val reactContext = context as ThemedReactContext
