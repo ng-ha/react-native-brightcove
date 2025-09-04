@@ -79,9 +79,9 @@ public typealias RCTPromiseRejectBlock = (String?, String?, (any Error)?) -> Voi
     playbackService = BCOVPlaybackService(withAccountId: accountId, policyKey: policyKey)
 
     let options = [
-      BCOVOfflineVideoManager.AllowsCellularDownloadKey: false,
-      BCOVOfflineVideoManager.AllowsCellularPlaybackKey: false,
-      BCOVOfflineVideoManager.AllowsCellularAnalyticsKey: false,
+      BCOVOfflineVideoManager.AllowsCellularDownloadKey: true,
+      BCOVOfflineVideoManager.AllowsCellularPlaybackKey: true,
+      BCOVOfflineVideoManager.AllowsCellularAnalyticsKey: true,
     ]
     BCOVOfflineVideoManager.initializeOfflineVideoManager(withDelegate: self, options: options)
   }

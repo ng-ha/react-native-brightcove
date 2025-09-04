@@ -25,7 +25,6 @@ class BrightcoveDownloader(val reactContext: ReactApplicationContext) :
   private val tag: String = "ng-ha:${this.javaClass.simpleName}"
   private var accountId: String? = null
   private var policyKey: String? = null
-  private var pasToken = "YOUR_PAS_TOKEN"
   private var catalog: OfflineCatalog? = null
 
   override fun getName() = NAME
@@ -44,7 +43,7 @@ class BrightcoveDownloader(val reactContext: ReactApplicationContext) :
       .build()
       .apply {
         isMobileDownloadAllowed = true
-        isMeteredDownloadAllowed = false
+        isMeteredDownloadAllowed = true
         isRoamingDownloadAllowed = false
       }
     catalog?.addDownloadEventListener(downloadEventListener)
@@ -116,7 +115,7 @@ class BrightcoveDownloader(val reactContext: ReactApplicationContext) :
 
     val httpRequestConfig = HttpRequestConfig
       .Builder()
-      .setBrightcoveAuthorizationToken(pasToken)
+      // .setBrightcoveAuthorizationToken("token")
       .build()
 
     catalog?.findVideoByID(id, httpRequestConfig, object : VideoListener() {
@@ -135,7 +134,7 @@ class BrightcoveDownloader(val reactContext: ReactApplicationContext) :
 
     val httpRequestConfig = HttpRequestConfig
       .Builder()
-      .setBrightcoveAuthorizationToken(pasToken)
+      // .setBrightcoveAuthorizationToken("token")
       .build()
 
     catalog?.findVideoByID(id, httpRequestConfig, object : VideoListener() {
