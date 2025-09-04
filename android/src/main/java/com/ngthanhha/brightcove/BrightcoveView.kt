@@ -6,6 +6,8 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Rect
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.util.AttributeSet
 import android.util.Log
 import android.util.Rational
@@ -356,13 +358,13 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
       .build()
     activity.setPictureInPictureParams(params)
 
-    // Handler(Looper.getMainLooper()).postDelayed({
-    //   val params = PictureInPictureParams.Builder()
-    //     .setAspectRatio(Rational(64, 36))
-    //     .setSourceRectHint(sourceRectHint)
-    //     .build()
-    //   activity.setPictureInPictureParams(params)
-    // }, 200)
+    Handler(Looper.getMainLooper()).postDelayed({
+      val params = PictureInPictureParams.Builder()
+        .setAspectRatio(Rational(64, 34))
+        .setSourceRectHint(sourceRectHint)
+        .build()
+      activity.setPictureInPictureParams(params)
+    }, 500)
   }
 
   private fun emitOnEvent(eventName: String, payload: WritableMap) {
