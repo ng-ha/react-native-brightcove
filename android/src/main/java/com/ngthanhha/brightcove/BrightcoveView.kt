@@ -79,7 +79,7 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
       LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
     brightcoveVideoView.finishInitialization()
     requestLayout()
-    ViewCompat.setTranslationZ(this, 9999f)
+    // ViewCompat.setTranslationZ(this, 9999f)
 
     val videoDisplayComponent = brightcoveVideoView.videoDisplay as ExoPlayerVideoDisplayComponent
     videoDisplayComponent.setMediaStore(OfflineStoreManager.getInstance(context))
