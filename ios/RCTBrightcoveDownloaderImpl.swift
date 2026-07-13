@@ -248,7 +248,10 @@ public typealias RCTPromiseRejectBlock = (String?, String?, (any Error)?) -> Voi
     // preload for FairPlay video
     if video.usesFairPlay {
       // TODO: handle parameters
-      offlineManager.preloadFairPlayLicense(video, parameters: [:]) {
+      offlineManager.preloadFairPlayLicense(video, parameters: [
+                    BCOVFairPlayLicense.RentalDurationKey: 604800,
+                    BCOVFairPlayLicense.PlayDurationKey: 604800,
+                ]) {
         [weak self] (offlineVideoToken: String?, error: Error?) in
         guard let self else { return }
         if let error {

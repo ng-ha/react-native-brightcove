@@ -34,13 +34,27 @@ import UIKit
   @objc public weak var eventEmitterDelegate: RCTBrightcoveViewEventEmitterDelegate?
 
   @objc override init(frame: CGRect) {
-    playbackController = BCOVPlayerSDKManager.sharedManager().createPlaybackController()
+    let authProxy = BCOVFPSBrightcoveAuthProxy(withPublisherId: nil, applicationId: nil)
+    let sourcePolicy = BCOVBasicSourceSelectionPolicy.sourceSelectionHLS(withScheme: BCOVSource.URLSchemeHTTPS)
+    BCOVOfflineVideoManager.sharedManager?.authProxy = authProxy
+    let bspOptions = BCOVBasicSessionProviderOptions()
+    bspOptions.sourceSelectionPolicy = sourcePolicy
+    let bsp = BCOVPlayerSDKManager.sharedManager().createBasicSessionProvider(withOptions: bspOptions)
+    let fps = BCOVPlayerSDKManager.sharedManager().createFairPlaySessionProvider(withApplicationCertificate: nil, authorizationProxy: authProxy, upstreamSessionProvider: bsp)
+    playbackController = BCOVPlayerSDKManager.sharedManager().createPlaybackController(withSessionProvider: fps, viewStrategy: nil)
     super.init(frame: frame)
     setup()
   }
 
   @objc required init?(coder: NSCoder) {
-    playbackController = BCOVPlayerSDKManager.sharedManager().createPlaybackController()
+    let authProxy = BCOVFPSBrightcoveAuthProxy(withPublisherId: nil, applicationId: nil)
+    let sourcePolicy = BCOVBasicSourceSelectionPolicy.sourceSelectionHLS(withScheme: BCOVSource.URLSchemeHTTPS)
+    BCOVOfflineVideoManager.sharedManager?.authProxy = authProxy
+    let bspOptions = BCOVBasicSessionProviderOptions()
+    bspOptions.sourceSelectionPolicy = sourcePolicy
+    let bsp = BCOVPlayerSDKManager.sharedManager().createBasicSessionProvider(withOptions: bspOptions)
+    let fps = BCOVPlayerSDKManager.sharedManager().createFairPlaySessionProvider(withApplicationCertificate: nil, authorizationProxy: authProxy, upstreamSessionProvider: bsp)
+    playbackController = BCOVPlayerSDKManager.sharedManager().createPlaybackController(withSessionProvider: fps, viewStrategy: nil)
     super.init(coder: coder)
     setup()
   }

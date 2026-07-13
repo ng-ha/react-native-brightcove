@@ -139,7 +139,7 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
       emitOnEvent(EventName.ON_ADS_PLAYING.eventName, payload)
     }
     eventEmitter.on(EventType.DID_ENTER_PICTURE_IN_PICTURE_MODE) {
-      updatePictureInPictureParams()
+      // updatePictureInPictureParams()
       val payload = Arguments.createMap()
       emitOnEvent(EventName.ON_DID_ENTER_PICTURE_IN_PICTURE_MODE.eventName, payload)
     }
@@ -184,6 +184,8 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
     toggleInViewPort(false)
     stopFrameCounter = true
     brightcoveVideoView.clear()
+    val videoDisplayComponent = brightcoveVideoView.videoDisplay as? ExoPlayerVideoDisplayComponent
+    videoDisplayComponent?.exoPlayer?.release()
     removeAllViews()
     (context as ThemedReactContext).removeLifecycleEventListener(this)
     val pipManager = PictureInPictureManager.getInstance()
@@ -344,28 +346,28 @@ class BrightcoveView : RelativeLayout, LifecycleEventListener {
 
   // Private methods
 
-  private fun updatePictureInPictureParams() {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+  // private fun updatePictureInPictureParams() {
+  //   if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
 
-    val activity = (context as ThemedReactContext).currentActivity!!
-    val sourceRectHint = Rect()
-    getGlobalVisibleRect(sourceRectHint)
+  //   val activity = (context as ThemedReactContext).currentActivity!!
+  //   val sourceRectHint = Rect()
+  //   getGlobalVisibleRect(sourceRectHint)
 
-    // Change the aspect ratio slightly to trigger a layout update
-    val params = PictureInPictureParams.Builder()
-      .setAspectRatio(Rational(64, 35))
-      .setSourceRectHint(sourceRectHint)
-      .build()
-    activity.setPictureInPictureParams(params)
+  //   // Change the aspect ratio slightly to trigger a layout update
+  //   val params = PictureInPictureParams.Builder()
+  //     .setAspectRatio(Rational(64, 35))
+  //     .setSourceRectHint(sourceRectHint)
+  //     .build()
+  //   activity.setPictureInPictureParams(params)
 
-    Handler(Looper.getMainLooper()).postDelayed({
-      val params = PictureInPictureParams.Builder()
-        .setAspectRatio(Rational(64, 34))
-        .setSourceRectHint(sourceRectHint)
-        .build()
-      activity.setPictureInPictureParams(params)
-    }, 500)
-  }
+  //   Handler(Looper.getMainLooper()).postDelayed({
+  //     val params = PictureInPictureParams.Builder()
+  //       .setAspectRatio(Rational(64, 34))
+  //       .setSourceRectHint(sourceRectHint)
+  //       .build()
+  //     activity.setPictureInPictureParams(params)
+  //   }, 500)
+  // }
 
   private fun emitOnEvent(eventName: String, payload: WritableMap) {
     val reactContext = context as ThemedReactContext
